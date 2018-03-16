@@ -60,9 +60,10 @@ def get(text, format, speaker, speed):
     return r.content
 
 
-def prepare_fname(tmpl, counter, LEN):
-    t = "{}-{:0>%d}" % LEN
-    return t.format(tmpl, counter)
+def prepare_fname(tmpl, counter, LEN, speaker, format):
+    t = "{name}_{speaker}-{counter:0>%d}.{format}" % LEN
+    return t.format(name=tmpl, speaker=speaker,
+                    format=format, counter=counter)
 
 
 def main(wdir, fname, ftmpl, format, speaker, speed):
@@ -85,9 +86,7 @@ def main(wdir, fname, ftmpl, format, speaker, speed):
     for i in BUF:
         COUNTER += 1
         name = path.join(wdir,
-                         prepare_fname(ftmpl,
-                                       COUNTER, LEN) + ".{}".format(format)
-                         )
+                         prepare_fname(ftmpl, COUNTER, LEN, speaker, format))
 
         if len(i) > 2000:
             print("{} !!! Warn voiced text more then 2000 = {}".format(name, len(i)),
