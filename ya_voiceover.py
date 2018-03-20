@@ -47,6 +47,8 @@ user_agents = [
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:49.0) Gecko/20100101 Firefox/49.0",
 ]
 
+
+
 def get(text, format, speaker, speed):
     hdr = dict(headers)
 
@@ -56,19 +58,13 @@ def get(text, format, speaker, speed):
                      headers=hdr)
     r.close()
     if r.status_code != 200:
-        return
+        return None
+
     return r.content
 
 
-def prepare_fname(tmpl, counter, LEN, speaker, format):
-    t = "{name}_{speaker}-{counter:0>%d}.{format}" % LEN
-    return t.format(name=tmpl, speaker=speaker,
-                    format=format, counter=counter)
-
-
-def main(wdir, fname, ftmpl, format, speaker, speed):
+def main(fname, out, format, speaker, speed):
     ERR_FILES = list()
-    COUNTER = 0
     BUF = list()
 
     with open(fname, "rt") as f:
@@ -81,47 +77,42 @@ def main(wdir, fname, ftmpl, format, speaker, speed):
                 break
     del buf
 
-    LEN = len(str(len(BUF))) # digit counts
+    with open(out, "bw") as wf:
+        for i in range(len(BUF)):
+            if len(BUF[i]) > 2000:
+                print("{} !!! Warn {} text string voiced text more then 2000".format(i),
+                      file=sys.stderr)
+                continue
+            else:
+                print(i, "of", len(BUF), "| Text len:", len(BUF[i]))
 
-    for i in BUF:
-        COUNTER += 1
-        name = path.join(wdir,
-                         prepare_fname(ftmpl, COUNTER, LEN, speaker, format))
+            media = get(BUF[i], format, speaker, speed)
+            if media is not None:
+                    wf.write(media)
+            else:
+                print("Err while voiceover. Server not sent media for {} string".format(i),
+                      file=sys.stderr)
+                ERR_FILES.append(i)
 
-        if len(i) > 2000:
-            print("{} !!! Warn voiced text more then 2000 = {}".format(name, len(i)),
-                  file=sys.stderr)
-        else:
-            print("{} = {}".format(name, len(i)))
-
-        media = get(i, format, speaker, speed)
-        if media is not None:
-            with open(name, "bw") as wf:
-                wf.write(media)
-        else:
-            print("Err while voiceover {}".format(name),
-                  file=sys.stderr)
-            ERR_FILES.append(name)
     if ERR_FILES:
         print("!!! Has errors! Some files not voiced: {}".format(ERR_FILES),
               file=sys.stderr)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate text to voice")
-    parser.add_argument('-d', '--dir', default="./", help="Working dir")
-    parser.add_argument('-n', '--name', default="mybook", help="File names template")
-    parser.add_argument('-f', '--file', help="Input *.txt file", required=True)
-    parser.add_argument('--speaker', default="zahar", help="Speeker",
+    parser.add_argument('-o', '--out', help="Outpu File name", required=True)
+    parser.add_argument('-i', '--input', help="Input *.txt file", required=True)
+    parser.add_argument("-s", '--speaker', default="zahar", help="Speeker",
                         choices=["jane", "oksana", "alyss", "omazh", "zahar", "ermil"])
-    parser.add_argument('--format', default="mp3", help="Output audio format",
+    parser.add_argument('-f', '--format', default="mp3", help="Output audio format",
                         choices=["mp3", "wav", "opus"])
     parser.add_argument('--speed', default=0.9, help="Output audio speed. 0.1 .. 3.0", type=float)
 
     args = parser.parse_args()
 
 
-    if len(args.file.split(".")) > 2:
-        if args.file.split(".")[-1] != "txt":
+    if len(args.input.split(".")) > 2:
+        if args.input.split(".")[-1] != "txt":
             print("Need .txt file", file=sys.stderr)
             sys.exit(1)
     else:
@@ -134,5 +125,5 @@ if __name__ == "__main__":
         parser.print_help()
         sys.exit(1)
 
-    main(args.dir, args.file, args.name, args.format, args.speaker, args.speed)
+    main(args.input, args.out, args.format, args.speaker, args.speed)
     sys.exit(0)
