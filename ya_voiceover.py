@@ -104,8 +104,6 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--input', help="Input *.txt file", required=True)
     parser.add_argument("-s", '--speaker', default="zahar", help="Speeker",
                         choices=["jane", "oksana", "alyss", "omazh", "zahar", "ermil"])
-    parser.add_argument('-f', '--format', default="mp3", help="Output audio format",
-                        choices=["mp3", "wav", "opus"])
     parser.add_argument('--speed', default=0.9, help="Output audio speed. 0.1 .. 3.0", type=float)
 
     args = parser.parse_args()
@@ -125,5 +123,5 @@ if __name__ == "__main__":
         parser.print_help()
         sys.exit(1)
 
-    main(args.input, args.out, args.format, args.speaker, args.speed)
+    main(args.input, args.out, "mp3", args.speaker, args.speed)
     sys.exit(0)
