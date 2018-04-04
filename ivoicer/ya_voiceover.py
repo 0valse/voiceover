@@ -101,7 +101,7 @@ def go(fname, out, format, speaker, speed):
     del s
 
     max_buf_len = len(BUF)
-    print("Voicing...")
+    print("Scoring begins...")
     if not BUF:
         print("Nothing to do. File is empty!")
         return 3
@@ -126,13 +126,13 @@ def go(fname, out, format, speaker, speed):
                     ERR_FILES.append(text)
                 text = ""
 
-    print("Finished!")
+    print("\nFinished. ", end="")
     if ERR_FILES:
         print()
-        print("!!! Has errors! Some files not voiced: {}".format(ERR_FILES),
+        print("We have errors! Some files is not voiced: {}".format(ERR_FILES),
               file=sys.stderr)
     else:
-        print("Have no errors!")
+        print("Success!")
 
 
 def main():
