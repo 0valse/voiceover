@@ -67,7 +67,16 @@ def get(text, format, speaker, speed):
     return r.content
 
 
-def main(fname, out, format, speaker, speed):
+def go(fname, out, format, speaker, speed):
+    def _media(text):
+        media = get(text.strip(),
+                            format, speaker, speed)
+        print("Done: {:.2%}".format(
+                                (max_buf_len - len(BUF))/max_buf_len),
+            end="\r"
+        )
+        return media
+
     ERR_FILES = list()
 
     with open(fname, "rb") as f:
@@ -82,39 +91,41 @@ def main(fname, out, format, speaker, speed):
     s = buf.decode(c)
     del buf
 
-    s = re.sub(r'[\t\f\v]', "", s)
-    s = re.sub(r'\r\n', " ", s)
-    s = re.sub(r'\n', " ", s)
+    s = re.sub(r'[\t\r\f\v]', "", s)
+    s = re.sub(r'\.\n', ". ", s)
+    #s = re.sub(r'(?P<name>[^\.]{1})\n', "\g<name> ", s)
+    s = re.sub(r'\n', ". ", s)
 
-    s = s.replace("   ", " ").replace("  ", " ")
+    s = s.replace("   ", " ").replace("  ", " ").replace("..", ".")
     BUF = s.split(". ")
     del s
 
     max_buf_len = len(BUF)
     print("Voicing...")
+    if not BUF:
+        print("Nothing to do. File is empty!")
+        return 3
     with open(out, "bw") as wf:
         text = ""
         while True:
             if not BUF:
+                media = _media(text)
+                if media is not None:
+                    wf.write(media)
+                else:
+                    ERR_FILES.append(text)
                 break
-
             if len(quote_plus(text)) + len(quote_plus(BUF[0])) + 1 < MAX_TEXT_URL:
                 text += "{}. ".format(BUF.pop(0))
             else:
                 #print(max_buf_len, "-", len(BUF), "=", max_buf_len - len(BUF), ":", ((max_buf_len - len(BUF))/max_buf_len)*100)
-                media = get(text.strip(),
-                            format, speaker, speed)
-                print("Done: {:.2%}".format(
-                                        (max_buf_len - len(BUF))/max_buf_len),
-                    end="\r"
-                )
+                media = _media(text)
                 if media is not None:
                     wf.write(media)
                 else:
                     ERR_FILES.append(text)
                 text = ""
 
-    print()
     print("Finished!")
     if ERR_FILES:
         print()
@@ -149,7 +160,7 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    sys.exit(main(args.input, args.out, "mp3", args.speaker, args.speed))
+    sys.exit(go(args.input, args.out, "mp3", args.speaker, args.speed))
 
 
 if __name__ == "__main__":
