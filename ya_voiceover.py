@@ -5,6 +5,9 @@ import requests
 import argparse
 from random import choice
 from os import path
+from urllib.parse import quote_plus
+import chardet
+import re
 
 
 KEY="a3a66d18-e9d2-43af-9408-36a30416baed"
@@ -16,7 +19,8 @@ headers = {
     'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0"
 }
-
+MAX_FILE_SIZE = 1 * 1024 * 1025
+MAX_TEXT_URL = 2000
 
 # for random UA
 user_agents = [
@@ -65,38 +69,60 @@ def get(text, format, speaker, speed):
 
 def main(fname, out, format, speaker, speed):
     ERR_FILES = list()
-    BUF = list()
 
-    with open(fname, "rt") as f:
-        while True:
-            buf = f.readline()
-            if buf:
-                if buf.strip():
-                    BUF.append(buf.strip())
-            else:
-                break
+    with open(fname, "rb") as f:
+        buf = f.read(MAX_FILE_SIZE)
+    charset = chardet.detect(buf[:1024])
+
+    #if charset['language'] != "Russian":
+    #    print("Bad language: {}".format(charset['language']), file=sys.stderr)
+    #    return 2
+
+    c = charset['encoding']
+    s = buf.decode(c)
     del buf
 
+    s = re.sub(r'[\t\f\v]', "", s)
+    s = re.sub(r'\r\n', " ", s)
+    s = re.sub(r'\n', " ", s)
+
+    s = s.replace("   ", " ").replace("  ", " ")
+    BUF = s.split(". ")
+    del s
+
+    max_buf_len = len(BUF)
+    print("Voicing...")
     with open(out, "bw") as wf:
-        for i in range(len(BUF)):
-            if len(BUF[i]) > 2000:
-                print("{} !!! Warn {} text string voiced text more then 2000".format(i),
-                      file=sys.stderr)
-                continue
-            else:
-                print(i, "of", len(BUF), "| Text len:", len(BUF[i]))
+        text = ""
+        while True:
+            if not BUF:
+                break
 
-            media = get(BUF[i], format, speaker, speed)
-            if media is not None:
+            if len(quote_plus(text)) + len(quote_plus(BUF[0])) + 1 < MAX_TEXT_URL:
+                text += "{}. ".format(BUF.pop(0))
+            else:
+                #print(max_buf_len, "-", len(BUF), "=", max_buf_len - len(BUF), ":", ((max_buf_len - len(BUF))/max_buf_len)*100)
+                media = get(text.strip(),
+                            format, speaker, speed)
+                print("Done: {:.2%}".format(
+                                        (max_buf_len - len(BUF))/max_buf_len),
+                    end="\r"
+                )
+                if media is not None:
                     wf.write(media)
-            else:
-                print("Err while voiceover. Server not sent media for {} string".format(i),
-                      file=sys.stderr)
-                ERR_FILES.append(i)
+                else:
+                    ERR_FILES.append(text)
+                text = ""
 
+    print()
+    print("Finished!")
     if ERR_FILES:
+        print()
         print("!!! Has errors! Some files not voiced: {}".format(ERR_FILES),
               file=sys.stderr)
+    else:
+        print("Have no errors!")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate text to voice")
@@ -109,11 +135,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
-    if len(args.input.split(".")) > 2:
+    if len(args.input.split(".")) >= 2:
         if args.input.split(".")[-1] != "txt":
+            print(args.input)
             print("Need .txt file", file=sys.stderr)
             sys.exit(1)
     else:
+        print(args.input)
         print("Need .txt file", file=sys.stderr)
         sys.exit(1)
 
@@ -123,5 +151,4 @@ if __name__ == "__main__":
         parser.print_help()
         sys.exit(1)
 
-    main(args.input, args.out, "mp3", args.speaker, args.speed)
-    sys.exit(0)
+    sys.exit(main(args.input, args.out, "mp3", args.speaker, args.speed))
