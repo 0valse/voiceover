@@ -1,17 +1,26 @@
 #!/usr/bin/env python3
 
+import signal
 import sys
-import requests
 import argparse
 from random import choice
-from os import path
-from urllib.parse import quote_plus
 import chardet
 import re
 
+from PyQt5.QtCore import (QCoreApplication, QObject, QRunnable, QFile, QIODevice,
+                          QUrl, pyqtSignal, QByteArray, QThread, QThreadPool,
+                          QMimeDatabase)
+from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply
+
+
+
+
+## VARS
 
 KEY="a3a66d18-e9d2-43af-9408-36a30416baed"
-url = 'https://tts.voicetech.yandex.net/generate?text="{text}"&format={format}&lang=ru-RU&speaker={speaker}&emotion=good&speed={speed}&key=%s' % KEY
+#url = 'https://tts.voicetech.yandex.net/generate?text="{text}"&format={format}&lang=ru-RU&speaker={speaker}&emotion=good&speed={speed}&key=%s' % KEY
+url = 'http://200ok-debian.rd.ptsecurity.ru:8000/get?text="{text}"&format={format}&lang=ru-RU&speaker={speaker}&emotion=good&speed={speed}'
+
 
 headers = {
     'Accept': '*/*',
@@ -19,6 +28,7 @@ headers = {
     'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0"
 }
+
 MAX_FILE_SIZE = 1 * 1024 * 1025
 MAX_TEXT_URL = 2000
 
@@ -52,88 +62,271 @@ user_agents = [
 ]
 
 
+## MAIN work
 
-def get(text, format, speaker, speed):
-    hdr = dict(headers)
+class Download(QObject):
+    downloadFinished = pyqtSignal(int, int, QByteArray)
+    max_redirects = 5
+    errors = {
+        "network": 1,
+        "redirect": 2,
+        "ok": 0,
+        "cancel": 255
+    }
+    current_url = None
 
-    #hdr["User-Agent"] = choice(user_agents)  # random UA
+    def __init__(self, num, url, parent=None, redirected=False, ua=None):
+        super(Download, self).__init__(parent)
+        self.parent = parent
+        self.request = QNetworkRequest()
+        self.mgr = QNetworkAccessManager()
+        self.mgr.finished.connect(self.on_download_finished)
 
-    r = requests.get(url.format(text=text, format=format, speaker=speaker, speed=speed),
-                     headers=hdr)
-    r.close()
-    if r.status_code != 200:
-        return None
+        self.current_url = QUrl(url)
+        self.request.setUrl(self.current_url)
+        if ua is not None:
+            self.request.setHeader(QNetworkRequest.UserAgentHeader,
+                                   ua)
+        self.num = num
+        if not redirected:
+            self.redirect_count = 0
+        self.mgr.get(self.request)
 
-    return r.content
+    def on_download_finished(self, reply):
+        if reply.error() != QNetworkReply.NoError:
+            #
+            print(reply.errorString(), file=sys.stderr)
+            #
+            self.downloadFinished.emit(self.errors["network"],
+                                       self.num,
+                                       QByteArray())
+        else:
+            redirect_url = reply.attribute(QNetworkRequest.RedirectionTargetAttribute)
+            if redirect_url is not None:
+                # защита от зацикливания бесконечной ссылкой на самого себя
+                if redirect_url == self.current_url:
+                    self.downloadFinished.emit(self.errors["redirect"],
+                                               self.num,
+                                               QByteArray())
+                else:
+                    self.current_url = self.current_url.resolved(redirect_url)
+                    # защита от зацикливания редиректов по количеству
+                    if self.redirect_count < self.max_redirects:
+                        self.redirect_count += 1
+                        self.__init__(self.num, self.current_url, parent=self.parent, redirected=True)
+                    else:
+                        self.downloadFinished.emit(self.errors["redirect"],
+                                                   self.num,
+                                                   QByteArray())
+            else:  # redirect_url if empty
+                buf = reply.readAll()
+                self.downloadFinished.emit(self.errors["ok"],
+                                           self.num,
+                                           buf)
+        reply.deleteLater()
 
+class MultiDownloader(QObject, QRunnable):
+    # прогресс: стало, всего
+    progressChanged = pyqtSignal(int, int)
+    # код ошибки, имя файла, количество ошибок
+    all_done = pyqtSignal(int, str, int)
+    max_buf_len = 0
 
-def go(fname, out, format, speaker, speed):
-    def _media(text):
-        media = get(text.strip(),
-                            format, speaker, speed)
-        print("Done: {:.2%}".format(
-                                (max_buf_len - len(BUF))/max_buf_len),
-            end="\r"
-        )
-        return media
+    errors = {
+        "network": 1,
+        "redirect": 2,
+        "ok": 0,
+        "cancel": 255,
+        "read_file": 3,
+        "write_file": 4,
+        "write_with_errors": 5,
+        "unsupported_input_file": 6
+    }
 
-    ERR_FILES = list()
+    def __init__(self, fname, output_path, format, speaker, speed, parent=None):
+        super(MultiDownloader, self).__init__(parent=parent)
 
-    with open(fname, "rb") as f:
-        buf = f.read(MAX_FILE_SIZE)
-    charset = chardet.detect(buf[:1024])
+        #self.downloader = Download(self)
+        #self.downloader.downloadFinished.connect(self.on_one_get)
 
-    #if charset['language'] != "Russian":
-    #    print("Bad language: {}".format(charset['language']), file=sys.stderr)
-    #    return 2
+        self.input = dict()
+        self.output = dict()
+        self.ERR_FILES = list()
 
-    c = charset['encoding']
-    s = buf.decode(c)
-    del buf
+        self.output_path = None
+        self.write_file = None
 
-    s = re.sub(r'[\t\r\f\v]', "", s)
-    s = re.sub(r'\.\n', ". ", s)
-    #s = re.sub(r'(?P<name>[^\.]{1})\n', "\g<name> ", s)
-    s = re.sub(r'\n', ". ", s)
+        self._text2urls(fname, output_path, format, speaker, speed)
 
-    s = s.replace("   ", " ").replace("  ", " ").replace("..", ".")
-    BUF = s.split(". ")
-    del s
+    def __del__(self):
+        self.cancel()
 
-    max_buf_len = len(BUF)
-    print("Scoring begins...")
-    if not BUF:
-        print("Nothing to do. File is empty!")
-        return 3
-    with open(out, "bw") as wf:
+    def run(self):
+        #
+        print(QThread.currentThread())
+        #
+        for k, v in self.input.items():
+            downloader = Download(k, v, parent=self, ua=choice(user_agents))
+            downloader.downloadFinished.connect(self.on_one_get)
+
+    def _prepare_urls(self, BUF, format, speaker, speed):
         text = ""
-        while True:
-            if not BUF:
-                media = _media(text)
-                if media is not None:
-                    wf.write(media)
-                else:
-                    ERR_FILES.append(text)
-                break
-            if len(quote_plus(text)) + len(quote_plus(BUF[0])) + 1 < MAX_TEXT_URL:
-                text += "{}. ".format(BUF.pop(0))
+        index = 0
+        for i in range(len(BUF)):
+            line = BUF[i]
+            if len(QUrl.toPercentEncoding(text)) + len(QUrl.toPercentEncoding(line)) + 1 < MAX_TEXT_URL:
+                text += "{}. ".format(line)
             else:
-                #print(max_buf_len, "-", len(BUF), "=", max_buf_len - len(BUF), ":", ((max_buf_len - len(BUF))/max_buf_len)*100)
-                media = _media(text)
-                if media is not None:
-                    wf.write(media)
-                else:
-                    ERR_FILES.append(text)
+                self.input[index] = url.format(text=text.strip(),
+                                           format=format,
+                                           speaker=speaker,
+                                           speed=speed)
+                index += 1
                 text = ""
 
-    print("\nFinished. ", end="")
-    if ERR_FILES:
-        print()
-        print("We have errors! Some files is not voiced: {}".format(ERR_FILES),
-              file=sys.stderr)
-    else:
-        print("Success!")
+    def _text2urls(self, fname, output_path, format, speaker, speed):
+        self._clear()
 
+        self.output_path = output_path
+
+        read_file = QFile(fname)
+        if not read_file.open(QIODevice.ReadOnly):
+            self.all_done.emit(self.errors['read_file'],
+                               self.output_path,
+                               -1)
+            if read_file.isOpen():
+                read_file.close()
+            self.cancel()
+            return
+
+        self.write_file = QFile(self.output_path)
+        if not self.write_file.open(QIODevice.WriteOnly):
+            self.all_done.emit(self.errors['write_file'],
+                               self.output_path,
+                               -1)
+            if self.write_file.isOpen():
+                self.write_file.close()
+            self.cancel()
+            return
+
+        buf = read_file.read(MAX_FILE_SIZE)
+        mtype = QMimeDatabase().mimeTypeForData(buf).name()
+        read_file.close()
+
+        if mtype != 'text/plain':
+            self.all_done.emit(self.errors['unsupported_input_file'],
+                               self.output_path,
+                               -1)
+            self.cancel()
+            return
+
+        charset = chardet.detect(buf[:1024])
+        c = charset['encoding']
+        try:
+            s = buf.decode(c)
+        except:
+            self.all_done.emit(self.errors['unsupported_input_file'],
+                               self.output_path,
+                               -1)
+            self.cancel()
+            del buf
+            return
+
+        del buf
+
+        s = re.sub(r'[\t\r\f\v]', "", s)
+        s = re.sub(r'\.\n|\n', ". ", s)
+        s = s.replace("   ", " ").replace("  ", " ").replace("..", ".")
+
+        slines = s.split(". ")
+
+        # наполним self.input
+        self._prepare_urls(slines, format, speaker, speed)
+        del slines
+
+        self.max_buf_len = len(self.input.keys())
+
+        self.output_path = output_path
+        #self.downloader.cancelled = False
+
+    def on_one_get(self, ret, num, array):
+        if ret == 0:
+            self.output[num] = array.data()
+        else:
+            self.ERR_FILES.append(num)
+
+        self.progressChanged.emit(len(self.ERR_FILES) + len(self.output.keys()), self.max_buf_len)
+
+        if len(self.output.keys()) >= len(self.input.keys()):
+            if self.write_file.isWritable():
+                # пишем в выходной файл в правильной последовательсноти
+                for k in sorted(self.output.keys()):
+                    self.write_file.write(self.output[k])
+                self.write_file.close()
+                if self.ERR_FILES:
+                    print('has err')
+                    self.all_done.emit(self.errors['write_with_errors'],
+                                       self.output_path,
+                                       len(self.ERR_FILES))
+                else:
+                    self.all_done.emit(self.errors['ok'],
+                                       self.output_path,
+                                       0)
+            else:
+                self.all_done.emit(self.errors['write_file'],
+                                   self.output_path,
+                                   -1)
+                self.cancel()
+
+    def _clear(self):
+        self.output.clear()
+        self.input.clear()
+        self.ERR_FILES.clear()
+        self.output_path = None
+        self.write_file = None
+
+    def cancel(self):
+        self._clear()
+
+
+class Voicer(QObject):
+    cancel = pyqtSignal()
+
+    def __init__(self, parent=None, max_threads=QThread.idealThreadCount()):
+        super(Voicer, self).__init__(parent=parent)
+        self.max_threads = max_threads
+
+    def do(self, input, out, fmt, speaker, speed):
+        print("Scoring begins...")
+
+        task = MultiDownloader(input, out, fmt, speaker, speed, parent=self)
+
+        #glob_threads = QThreadPool.globalInstance()
+        #glob_threads.setParent(self)
+        #glob_threads.setMaxThreadCount(self.max_threads)
+
+        #glob_threads.start(task)
+        #
+        #print(glob_threads.activeThreadCount())
+        #
+        task.run()
+
+        task.progressChanged.connect(self.on_progress)
+        task.all_done.connect(self.on_all_done)
+
+    def on_progress(self, prgs, all):
+        print("Progress: {:.2%}".format(prgs/all), end="\r")
+
+    def on_all_done(self, ret_code, ofile, err_nums):
+        print("\nFinished. ", end="")
+        if err_nums > 0:
+            print()
+            print("We have errors! Some peases is not voiced",
+                  file=sys.stderr)
+        else:
+            print("Success!")
+            print("Output file is {}".format(ofile))
+        app_exit(ret_code)
 
 def main():
     parser = argparse.ArgumentParser(description="Translate text to voice")
@@ -160,8 +353,19 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    sys.exit(go(args.input, args.out, "mp3", args.speaker, args.speed))
+    voicer = Voicer(app)
 
+    voicer.do(args.input, args.out, "mp3", args.speaker, args.speed)
+
+    sys.exit(app.exec_())
+
+
+def app_exit(code=0):
+    QCoreApplication.instance().exit(code)
+    #sys.exit(code)
+
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+app = QCoreApplication(sys.argv)
 
 if __name__ == "__main__":
     main()

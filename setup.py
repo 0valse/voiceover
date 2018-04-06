@@ -6,7 +6,8 @@ from setuptools import find_packages
 APP_NAME = "ivoicer"
 
 requirements = [
-    "chardet"
+    "chardet",
+    "PyQt5"
 ]
 
 setup(
