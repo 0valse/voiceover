@@ -7,9 +7,8 @@ from random import choice
 import chardet
 import re
 
-from PyQt5.QtCore import (QCoreApplication, QObject, QRunnable, QFile, QIODevice,
-                          QUrl, pyqtSignal, QByteArray, QThread, QThreadPool,
-                          QMimeDatabase)
+from PyQt5.QtCore import (QCoreApplication, QObject, QFile, QIODevice,
+                          QUrl, pyqtSignal, QByteArray, QThread, QMimeDatabase)
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply
 
 
@@ -124,7 +123,7 @@ class Download(QObject):
                                            buf)
         reply.deleteLater()
 
-class MultiDownloader(QObject, QRunnable):
+class MultiDownloader(QObject):
     # прогресс: стало, всего
     progressChanged = pyqtSignal(int, int)
     # код ошибки, имя файла, количество ошибок
@@ -158,7 +157,7 @@ class MultiDownloader(QObject, QRunnable):
         self._text2urls(fname, output_path, format, speaker, speed)
 
     def __del__(self):
-        self.cancel()
+        self._clear()
 
     def run(self):
         #
@@ -195,7 +194,7 @@ class MultiDownloader(QObject, QRunnable):
                                -1)
             if read_file.isOpen():
                 read_file.close()
-            self.cancel()
+            self._clear()
             return
 
         self.write_file = QFile(self.output_path)
@@ -205,7 +204,7 @@ class MultiDownloader(QObject, QRunnable):
                                -1)
             if self.write_file.isOpen():
                 self.write_file.close()
-            self.cancel()
+            self._clear()
             return
 
         buf = read_file.read(MAX_FILE_SIZE)
@@ -216,7 +215,7 @@ class MultiDownloader(QObject, QRunnable):
             self.all_done.emit(self.errors['unsupported_input_file'],
                                self.output_path,
                                -1)
-            self.cancel()
+            self._clear()
             return
 
         charset = chardet.detect(buf[:1024])
@@ -227,7 +226,7 @@ class MultiDownloader(QObject, QRunnable):
             self.all_done.emit(self.errors['unsupported_input_file'],
                                self.output_path,
                                -1)
-            self.cancel()
+            self._clear()
             del buf
             return
 
@@ -246,7 +245,6 @@ class MultiDownloader(QObject, QRunnable):
         self.max_buf_len = len(self.input.keys())
 
         self.output_path = output_path
-        #self.downloader.cancelled = False
 
     def on_one_get(self, ret, num, array):
         if ret == 0:
@@ -275,7 +273,7 @@ class MultiDownloader(QObject, QRunnable):
                 self.all_done.emit(self.errors['write_file'],
                                    self.output_path,
                                    -1)
-                self.cancel()
+                self._clear()
 
     def _clear(self):
         self.output.clear()
@@ -284,8 +282,6 @@ class MultiDownloader(QObject, QRunnable):
         self.output_path = None
         self.write_file = None
 
-    def cancel(self):
-        self._clear()
 
 
 class Voicer(QObject):
@@ -295,23 +291,40 @@ class Voicer(QObject):
         super(Voicer, self).__init__(parent=parent)
         self.max_threads = max_threads
 
+    def __del__(self):
+        self._wait_thread()
+
+    def _wait_thread(self):
+        self.thread.quit()
+        self.thread.wait(10)
+        if not self.thread.isFinished():
+            self.thread.terminate()
+
     def do(self, input, out, fmt, speaker, speed):
         print("Scoring begins...")
 
-        task = MultiDownloader(input, out, fmt, speaker, speed, parent=self)
+        print(QThread.currentThread())
 
-        #glob_threads = QThreadPool.globalInstance()
-        #glob_threads.setParent(self)
-        #glob_threads.setMaxThreadCount(self.max_threads)
+        self.task = MultiDownloader(input, out, fmt, speaker, speed, parent=self)
+        self.task.progressChanged.connect(self.on_progress)
+        self.task.all_done.connect(self.on_all_done)
 
-        #glob_threads.start(task)
-        #
-        #print(glob_threads.activeThreadCount())
-        #
-        task.run()
+        self.thread = QThread()
+        self.thread.started.connect(self.task.run)
+        self.thread.finished.connect(self.task.deleteLater)
 
-        task.progressChanged.connect(self.on_progress)
-        task.all_done.connect(self.on_all_done)
+        self.task.moveToThread(self.thread)
+
+        """
+        objThread = QThread()
+        obj = SomeObject()
+        obj.moveToThread(objThread)
+        obj.finished.connect(objThread.quit)
+        objThread.started.connect(obj.long_running)
+        objThread.finished.connect(app.exit)
+        objThread.start()"""
+
+        self.thread.start()
 
     def on_progress(self, prgs, all):
         print("Progress: {:.2%}".format(prgs/all), end="\r")
@@ -325,7 +338,9 @@ class Voicer(QObject):
         else:
             print("Success!")
             print("Output file is {}".format(ofile))
+        self._wait_thread()
         app_exit(ret_code)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Translate text to voice")
@@ -359,12 +374,13 @@ def main():
     sys.exit(app.exec_())
 
 
-def app_exit(code=0):
+def app_exit(code=0, ret=0):
     QCoreApplication.instance().exit(code)
     #sys.exit(code)
 
-signal.signal(signal.SIGINT, signal.SIG_DFL)
+
 app = QCoreApplication(sys.argv)
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 if __name__ == "__main__":
     main()
