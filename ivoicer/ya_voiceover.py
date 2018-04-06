@@ -18,8 +18,7 @@ from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkRepl
 ## VARS
 
 KEY="a3a66d18-e9d2-43af-9408-36a30416baed"
-#url = 'https://tts.voicetech.yandex.net/generate?text="{text}"&format={format}&lang=ru-RU&speaker={speaker}&emotion=good&speed={speed}&key=%s' % KEY
-url = 'http://200ok-debian.rd.ptsecurity.ru:8000/get?text="{text}"&format={format}&lang=ru-RU&speaker={speaker}&emotion=good&speed={speed}'
+url = 'https://tts.voicetech.yandex.net/generate?text="{text}"&format={format}&lang=ru-RU&speaker={speaker}&emotion=good&speed={speed}&key=%s' % KEY
 
 
 headers = {
