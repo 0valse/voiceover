@@ -24,19 +24,7 @@ const QString URL_TEMPLATE = "https://tts.voicetech.yandex.net/generate?text=\"%
 const QString OUT_FORMAT = "mp3";
 const QString VALID_MIME = "text/plain"; // TODO: use Qlist later
 
-enum ERRORS
- {
-        ok,
-        err_network,
-        err_redirect,
-        err_read_file,
-        err_write_file,
-        err_write_with_errors,
-        err_unsupported_mime_input_file,
-        err_unsupported_encoding_input_file,
-        err_cancel,
-        warn_not_voiced,
-    };
+
 
 
 const QList<QString> UA = QList<QString>()
@@ -72,14 +60,28 @@ class MultiDownloader : public QObject, public QRunnable
 {
     Q_OBJECT
 public:
-    const int max_redirects = 5;    
-    MultiDownloader(QString in_file_name, QString _speaker, QObject* parent = 0);
+    enum ERRORS
+    {
+        ok,
+        err_network,
+        err_redirect,
+        err_read_file,
+        err_write_file,
+        err_write_with_errors,
+        err_unsupported_mime_input_file,
+        err_unsupported_encoding_input_file,
+        err_cancel,
+        warn_not_voiced,
+    };
+    const int max_redirects = 5;  
+    MultiDownloader(QString in_file_name, QString _speaker);
     ~MultiDownloader();
     
 signals:
     void on_progress_change(int now);
     void on_all_done(int err_code, int err_files, QString outfile_name);
     void ready_voiced(int max);
+    void on_canceled();
 
 public slots:
     void cancel();
@@ -91,6 +93,8 @@ private:
     float speed = 0.9;
     QFile *in_file = new QFile();
     QFile *out_file = new QFile();
+    
+    QNetworkAccessManager *manager = new QNetworkAccessManager();
 
     QHash<int, QUrl> in_list;
     QMap<int, QByteArray> out_list;

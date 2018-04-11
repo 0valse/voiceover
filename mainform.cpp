@@ -26,6 +26,7 @@
 #include <QtCore>
 #include <QDir>
 #include <QMessageBox>
+#include <QLineEdit>
 
 
 #include "ui_mainform.h"
@@ -39,7 +40,7 @@ MainForm::MainForm(QWidget *parent)
     ui->setupUi(this);
     connect(ui->pushButtonGo, &QPushButton::clicked, this, &MainForm::getData);
     connect(ui->toolButtonInput, &QToolButton::clicked, this, &MainForm::on_setFileName);
-    
+    connect(ui->lineEdit, &QLineEdit::textChanged, this, &MainForm::on_go_ready);
 }
 
 MainForm::~MainForm()
@@ -49,19 +50,23 @@ MainForm::~MainForm()
 
 void MainForm::getData()
 {
-    if (ui->labelInput->text() != "") {
+    ui->pushButtonStop->setEnabled(true);
+    ui->pushButtonGo->setEnabled(false);
+    if (ui->lineEdit->text() != "") {
         qDebug() << "parent: " << QThread::currentThread();
-        MultiDownloader *task = new MultiDownloader(ui->labelInput->text(),
+        MultiDownloader *task = new MultiDownloader(ui->lineEdit->text(),
                                                     ui->comboBoxSpeaker->currentText());
-        //task->setParent(this);
         connect(task, &MultiDownloader::on_progress_change,
                 ui->progressBar, &QProgressBar::setValue);
         connect(task, &MultiDownloader::on_all_done,
                 this, &MainForm::onReadingFinished);
         connect(task, &MultiDownloader::ready_voiced,
                 this, &MainForm::onReady);
-        //QThreadPool *pool = new QThreadPool(); //globalInstance()->start(task);
-        //pool->start(task);
+        connect(ui->pushButtonStop, &QPushButton::clicked,
+                task, &MultiDownloader::cancel);
+        connect(task, &MultiDownloader::on_canceled,
+                this, &MainForm::canceled);
+        //QThreadPool::globalInstance()->start(task);
         task->run();
     } else {
         QMessageBox msgBox;
@@ -75,7 +80,7 @@ void MainForm::on_setFileName() {
                                                "Выбрать текстовый файл",
                                                QDir::currentPath(),
                                                "Text (*.txt)");
-    ui->labelInput->setText(str);
+    if (!str.isEmpty()) ui->lineEdit->setText(str);
 }
 
 void MainForm::onReady(int max)
@@ -86,41 +91,43 @@ void MainForm::onReady(int max)
 
 void MainForm::onReadingFinished(int err_code, int err_files, QString outfile_name)
 {
+    this->canceled();
+    
     QMessageBox msgBox;
     QString msg = "";
     
     switch ( err_code ) {
-        case ok: {
+        case MultiDownloader::ok: {
             msg.append(QString::fromUtf8("Все готово!"));
             break;
         }
-        case err_network: {
+        case MultiDownloader::err_network: {
             msg.append(QString::fromUtf8("Ошибка сети!"));
             break;
         } 
-        case err_redirect: {
+        case MultiDownloader::err_redirect: {
             msg.append(QString::fromUtf8("Ошибка сети!"));
             break;
         }
-        case err_read_file: {
+        case MultiDownloader::err_read_file: {
             msg.append(QString::fromUtf8("Ошибка! Не удается прочитать файл!"));
             break;
         }
-        case err_write_file: {
+        case MultiDownloader::err_write_file: {
             msg.append(QString::fromUtf8("Ошибка! Не удается записать в выходной файла!"));
             break;
         }
-        case err_unsupported_mime_input_file: {
+        case MultiDownloader::err_unsupported_mime_input_file: {
             msg.append(QString::fromUtf8("Ошибка! Не поддерживаемый тип файла!"));
             break;
         }
-        case err_write_with_errors: {
+        case MultiDownloader::err_write_with_errors: {
         }
-        case err_unsupported_encoding_input_file: {
+        case MultiDownloader::err_unsupported_encoding_input_file: {
             msg.append(QString::fromUtf8("Ошибка! Не поддерживаемая кодировка текстового файла!"));
             break;
         }
-        case warn_not_voiced: {
+        case MultiDownloader::warn_not_voiced: {
             msg.append("\n");
             msg.append(QString::fromUtf8("Не удалось обработать %1 фрагментов.").arg(err_files));
             break;
@@ -132,5 +139,19 @@ void MainForm::onReadingFinished(int err_code, int err_files, QString outfile_na
     msgBox.exec();
     
     qDebug() << "all_done" << ": " << err_code << ": " << err_files <<": " << outfile_name;
+}
+
+void MainForm::canceled()
+{
+    ui->pushButtonStop->setEnabled(false);
+    ui->pushButtonGo->setEnabled(false);
+    ui->progressBar->setValue(0);
+    ui->lineEdit->setText("");
+}
+
+void MainForm::on_go_ready()
+{
+    ui->pushButtonStop->setEnabled(false);
+    ui->pushButtonGo->setEnabled(true);
 }
 

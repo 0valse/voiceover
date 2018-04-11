@@ -42,6 +42,8 @@ private slots:
     void onReadingFinished(int err_code, int err_files, QString outfile_name);
     void on_setFileName();
     void getData();
+    void canceled();
+    void on_go_ready();
     
 private:
     Ui::Form* ui;

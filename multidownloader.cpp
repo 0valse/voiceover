@@ -35,11 +35,12 @@
 #include "multidownloader.h"
 
 
-MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker, QObject *parent)
-    : QObject(parent), QRunnable(), speaker(_speaker), m_cancelledMarker(false)
+MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker)
+    : QObject(), QRunnable(), speaker(_speaker), m_cancelledMarker(false)
 {
     in_file->setFileName(in_file_name);
     out_file->setFileName(MultiDownloader::prepare_out_file_name(in_file_name));
+    connect(manager, &QNetworkAccessManager::finished, this, &MultiDownloader::on_one_read);
 }
 
 MultiDownloader::~MultiDownloader()
@@ -64,18 +65,15 @@ void MultiDownloader::run()
     qDebug() << "in thread: " << QThread::currentThread();
 
     if( m_cancelledMarker.testAndSetAcquire( true, true ) ) {
-        emit on_all_done(err_cancel, 0, "");
+        emit on_all_done(MultiDownloader::err_cancel, 0, "");
         return;
     }
     
     _clean();
     _text2urls();
     if (!out_file->open(QIODevice::WriteOnly)) {
-        emit on_all_done(err_write_file, 0, out_file->fileName());
+        emit on_all_done(MultiDownloader::err_write_file, 0, out_file->fileName());
     }
-
-    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    connect(manager, &QNetworkAccessManager::finished, this, &MultiDownloader::on_one_read);
 
     for (int i = 0; i < in_list.size(); ++i) {
         QNetworkRequest r;
@@ -103,7 +101,7 @@ void MultiDownloader::_clean()
 
 void MultiDownloader::_text2urls() {
     if (!in_file->open(QIODevice::ReadOnly)) {
-        emit on_all_done(err_read_file, 0, "");
+        emit on_all_done(MultiDownloader::err_read_file, 0, "");
         return;
     }
     
@@ -114,14 +112,14 @@ void MultiDownloader::_text2urls() {
     qDebug() << mtype.name();
     
     if (mtype.name() != VALID_MIME ) {
-        emit on_all_done(err_unsupported_mime_input_file, 0, "");
+        emit on_all_done(MultiDownloader::err_unsupported_mime_input_file, 0, "");
         return;
     }
     
     uchardet_t upage = uchardet_new();
     int retval = uchardet_handle_data(upage, buf.constData(), buf.size());
     if (retval != 0) {
-        emit on_all_done(err_unsupported_encoding_input_file, 0, "");
+        emit on_all_done(MultiDownloader::err_unsupported_encoding_input_file, 0, "");
         uchardet_data_end(upage);
         uchardet_delete(upage);
         return;
@@ -141,7 +139,6 @@ void MultiDownloader::_text2urls() {
     
     s = s.trimmed().replace(".\n", ". ").replace("\n", ". ").simplified();
     s.replace("   ", " ").replace("  ", " ").replace("..", ".");
-    qDebug() << s;
 
     QStringList slines = s.split(". ");
     
@@ -173,14 +170,17 @@ void MultiDownloader::_text2urls() {
 void MultiDownloader::on_one_read(QNetworkReply* reply)
 {
     if(m_cancelledMarker.testAndSetAcquire(true, true)) {
-        emit on_all_done(err_cancel, 0, "");
+        reply->abort();
+        if (out_file->isOpen())
+            out_file->close();
+        emit on_canceled();
         return;
+    } else {
+        emit on_progress_change(out_list.size()+1);
     }
 
     QNetworkRequest r = reply->request();
     int i = r.attribute(QNetworkRequest::User, 0).toInt();
-    
-    emit on_progress_change(out_list.size()+1);
 
     if(reply->error()) {
 
@@ -197,6 +197,7 @@ void MultiDownloader::on_one_read(QNetworkReply* reply)
         int out_size = out_list.size();
 
         if (in_size == out_size) {
+            
             QMapIterator<int, QByteArray> i(out_list);
             while (i.hasNext()) {
                 i.next();
@@ -206,10 +207,11 @@ void MultiDownloader::on_one_read(QNetworkReply* reply)
 
             int code;
             if (err_texts.isEmpty()) {
-                code = ok;
+                code = MultiDownloader::ok;
             } else {
-                code = warn_not_voiced;
+                code = MultiDownloader::warn_not_voiced;
             }
+
             emit on_all_done(code, err_texts.size(), out_file->fileName());
 
         } //if (in_size == out_size)
@@ -219,5 +221,5 @@ void MultiDownloader::on_one_read(QNetworkReply* reply)
 }
 
 void MultiDownloader::cancel() {
-    m_cancelledMarker.fetchAndStoreAcquire( true );
+    m_cancelledMarker.fetchAndStoreAcquire(true);
 }
