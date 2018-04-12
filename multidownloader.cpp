@@ -29,15 +29,13 @@
 #include <QHashIterator>
 #include <QRandomGenerator>
 
-#include <QThread>
-
 #include <uchardet/uchardet.h>
 
 #include "multidownloader.h"
 
 
 MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker, QObject *parent)
-    : QObject(parent), QRunnable(), speaker(_speaker), m_cancelledMarker(false)
+    : QObject(parent), speaker(_speaker), m_cancelledMarker(false)
 {
     manager = new QNetworkAccessManager(this);
     connect(manager, &QNetworkAccessManager::finished, this, &MultiDownloader::on_one_read);
@@ -65,8 +63,6 @@ QString MultiDownloader::prepare_out_file_name(QString in_file_name) {
 
 void MultiDownloader::run()
 {
-    qDebug() << "in thread: " << QThread::currentThread();
-
     if( m_cancelledMarker.testAndSetAcquire( true, true ) ) {
         emit on_all_done(MultiDownloader::err_cancel, 0, "");
         return;

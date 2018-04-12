@@ -19,7 +19,6 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QToolButton>
-#include <QThreadPool>
 #include <QProgressBar>
 #include <QComboBox>
 #include <QFileDialog>
@@ -27,7 +26,9 @@
 #include <QDir>
 #include <QMessageBox>
 #include <QLineEdit>
-
+#include <QFile>
+#include <QFileInfo>
+#include <QMediaPlayer>
 
 #include "ui_mainform.h"
 #include "mainform.h"
@@ -41,6 +42,7 @@ MainForm::MainForm(QWidget *parent)
     connect(ui->pushButtonGo, &QPushButton::clicked, this, &MainForm::getData);
     connect(ui->toolButtonInput, &QToolButton::clicked, this, &MainForm::on_setFileName);
     connect(ui->lineEdit, &QLineEdit::textChanged, this, &MainForm::on_go_ready);
+    connect(ui->pushButtonPlay, &QPushButton::clicked, this, &MainForm::play_toggle);
 }
 
 MainForm::~MainForm()
@@ -53,9 +55,9 @@ void MainForm::getData()
     ui->pushButtonStop->setEnabled(true);
     ui->pushButtonGo->setEnabled(false);
     if (ui->lineEdit->text() != "") {
-        qDebug() << "parent: " << QThread::currentThread();
         MultiDownloader *task = new MultiDownloader(ui->lineEdit->text(),
-                                                    ui->comboBoxSpeaker->currentText());
+                                                    ui->comboBoxSpeaker->currentText(),
+						    this);
         connect(task, &MultiDownloader::on_progress_change,
                 ui->progressBar, &QProgressBar::setValue);
         connect(task, &MultiDownloader::on_all_done,
@@ -66,7 +68,6 @@ void MainForm::getData()
                 task, &MultiDownloader::cancel);
         connect(task, &MultiDownloader::need_abort,
                 this, &MainForm::canceled);
-        //QThreadPool::globalInstance()->start(task);
         task->run();
     } else {
         QMessageBox msgBox;
@@ -80,7 +81,22 @@ void MainForm::on_setFileName() {
                                                "Выбрать текстовый файл",
                                                QDir::currentPath(),
                                                "Text (*.txt)");
-    if (!str.isEmpty()) ui->lineEdit->setText(str);
+    if (!str.isEmpty()) {
+        QFileInfo check_file(MultiDownloader::prepare_out_file_name(str));
+        QMessageBox::StandardButton reply;
+        if (check_file.exists() && check_file.isFile()) {
+            reply = QMessageBox::question(this,
+                                    QString::fromUtf8("Заменить?"),
+                                    QString::fromUtf8("Выходной файл сущесвует.\nЗаменить?"),
+                                    QMessageBox::Yes|QMessageBox::No
+            );
+            if (reply == QMessageBox::Yes) {
+                ui->lineEdit->setText(str);
+            } else {
+                this->canceled();
+            }
+        } //if (check_file.exists() && check_file.isFile())
+    } //if (!str.isEmpty())
 }
 
 void MainForm::onReady(int max)
@@ -158,5 +174,33 @@ void MainForm::on_go_ready()
 {
     ui->pushButtonStop->setEnabled(false);
     ui->pushButtonGo->setEnabled(true);
+}
+
+
+void MainForm::play_toggle()
+{    
+    QMediaPlayer *m_player = new QMediaPlayer(this);
+    m_player->setVolume(70);
+    QUrl current_media = QUrl(
+        QString("qrc:/examples/%1").arg(ui->comboBoxSpeaker->currentText())
+    );
+    qDebug() << current_media;
+    qDebug() << m_player->state();
+    
+    m_player->setMedia(current_media);
+        m_player->play();
+/*
+    if (m_player->state() == QMediaPlayer::StoppedState) {
+        //m_player->stop();
+        m_player->setMedia(current_media);
+        m_player->play();
+        ui->pushButtonPlay->setText(QString::fromUtf8("Стоп"));
+    }
+
+    if (m_player->state() == QMediaPlayer::PlayingState) {
+        m_player->stop();
+        ui->pushButtonPlay->setText(QString::fromUtf8("Тест"));
+    }
+    */
 }
 

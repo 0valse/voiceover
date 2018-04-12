@@ -143,11 +143,8 @@
        </item>
        <item>
         <widget class="QPushButton" name="pushButtonPlay">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
          <property name="text">
-          <string>Воспроизвести</string>
+          <string>Тест</string>
          </property>
          <property name="icon">
           <iconset theme="media-playback-start">

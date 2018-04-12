@@ -21,7 +21,6 @@
 
 #include <QWidget>
 
-
 #include "multidownloader.h"
 #include "ui_mainform.h"
 
@@ -44,9 +43,11 @@ private slots:
     void getData();
     void canceled();
     void on_go_ready();
-    
+    void play_toggle();
+
 private:
     Ui::Form* ui;
+    
 };
 
 #endif // MAINFORM_H

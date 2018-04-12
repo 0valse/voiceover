@@ -1,8 +1,9 @@
 TEMPLATE = app
 
-QT += widgets network
+QT += widgets network multimedia
 
 FORMS += ui/mainform.ui
+RESOURCES += audio/music.qrc
 SOURCES += main.cpp mainform.cpp
 SOURCES += multidownloader.cpp
 HEADERS += mainform.h

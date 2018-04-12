@@ -1,0 +1,10 @@
+<RCC>
+  <qresource prefix="examples">
+    <file alias="alyss">test_alyss.mp3</file>
+    <file alias="ermil">test_ermil.mp3</file>
+    <file alias="jane">test_jane.mp3</file>
+    <file alias="oksana">test_oksana.mp3</file>
+    <file alias="omazh">test_omazh.mp3</file>
+    <file alias="zahar">test_zahar.mp3</file>
+  </qresource>
+</RCC>

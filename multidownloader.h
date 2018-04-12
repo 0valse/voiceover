@@ -56,7 +56,7 @@ const QList<QString> UA = QList<QString>()
 // END const
 
 
-class MultiDownloader : public QObject, public QRunnable
+class MultiDownloader : public QObject
 {
     Q_OBJECT
 public:
@@ -76,6 +76,7 @@ public:
     const int max_redirects = 5;  
     MultiDownloader(QString in_file_name, QString _speaker, QObject *parent = 0);
     ~MultiDownloader();
+    static QString prepare_out_file_name(QString in_file_name);
     
 signals:
     void on_progress_change(int now);
@@ -101,8 +102,6 @@ private:
     QList<QUrl> err_texts;
     
     QAtomicInt m_cancelledMarker;
-    
-    static QString prepare_out_file_name(QString in_file_name);
 
     void _prepare_list(QFile input);
     void _text2urls();
