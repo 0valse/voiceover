@@ -24,7 +24,7 @@ const QString URL_TEMPLATE = "https://tts.voicetech.yandex.net/generate?text=\"%
 const QString OUT_FORMAT = "mp3";
 const QString VALID_MIME = "text/plain"; // TODO: use Qlist later
 
-
+#define getCounter "getCounter"
 
 
 const QList<QString> UA = QList<QString>()
@@ -74,14 +74,14 @@ public:
         warn_not_voiced,
     };
     const int max_redirects = 5;  
-    MultiDownloader(QString in_file_name, QString _speaker);
+    MultiDownloader(QString in_file_name, QString _speaker, QObject *parent = 0);
     ~MultiDownloader();
     
 signals:
     void on_progress_change(int now);
     void on_all_done(int err_code, int err_files, QString outfile_name);
     void ready_voiced(int max);
-    void on_canceled();
+    void need_abort();
 
 public slots:
     void cancel();
@@ -94,7 +94,7 @@ private:
     QFile *in_file = new QFile();
     QFile *out_file = new QFile();
     
-    QNetworkAccessManager *manager = new QNetworkAccessManager();
+    QNetworkAccessManager *manager;
 
     QHash<int, QUrl> in_list;
     QMap<int, QByteArray> out_list;

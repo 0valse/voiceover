@@ -23,6 +23,7 @@
 #include <QTextCodec>
 #include <QUrl>
 #include <QNetworkRequest>
+#include <QNetworkReply>
 #include <QNetworkAccessManager>
 #include <QObject>
 #include <QHashIterator>
@@ -35,12 +36,14 @@
 #include "multidownloader.h"
 
 
-MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker)
-    : QObject(), QRunnable(), speaker(_speaker), m_cancelledMarker(false)
+MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker, QObject *parent)
+    : QObject(parent), QRunnable(), speaker(_speaker), m_cancelledMarker(false)
 {
+    manager = new QNetworkAccessManager(this);
+    connect(manager, &QNetworkAccessManager::finished, this, &MultiDownloader::on_one_read);
+    
     in_file->setFileName(in_file_name);
     out_file->setFileName(MultiDownloader::prepare_out_file_name(in_file_name));
-    connect(manager, &QNetworkAccessManager::finished, this, &MultiDownloader::on_one_read);
 }
 
 MultiDownloader::~MultiDownloader()
@@ -75,13 +78,15 @@ void MultiDownloader::run()
         emit on_all_done(MultiDownloader::err_write_file, 0, out_file->fileName());
     }
 
+    QNetworkReply *rpl;
     for (int i = 0; i < in_list.size(); ++i) {
         QNetworkRequest r;
         r.setUrl(in_list[i]);
-        r.setAttribute(QNetworkRequest::User, QVariant(i));
         int rand_num = QRandomGenerator::global()->bounded(0, UA.size());
         r.setHeader(QNetworkRequest::UserAgentHeader, UA[rand_num]);
-        manager->get(r);
+        rpl = manager->get(r);
+        rpl->setProperty(getCounter, QVariant(i));
+        connect(this, &MultiDownloader::need_abort, rpl, &QNetworkReply::abort);
     }
 }
 
@@ -89,13 +94,13 @@ void MultiDownloader::_clean()
 {
     out_list.clear();
     in_list.clear();
-    /*if (!in_file->isOpen()) {
+    err_texts.clear();
+    if (!in_file->isOpen()) {
         in_file->close();
-    }
+    }    
     if (!out_file->isOpen()) {
         out_file->close();
     }
-    */
 }
 
 
@@ -170,17 +175,23 @@ void MultiDownloader::_text2urls() {
 void MultiDownloader::on_one_read(QNetworkReply* reply)
 {
     if(m_cancelledMarker.testAndSetAcquire(true, true)) {
-        reply->abort();
         if (out_file->isOpen())
             out_file->close();
-        emit on_canceled();
+        reply->abort();
         return;
     } else {
         emit on_progress_change(out_list.size()+1);
     }
 
     QNetworkRequest r = reply->request();
-    int i = r.attribute(QNetworkRequest::User, 0).toInt();
+    QVariant prop = reply->property(getCounter);
+    int i;
+    if (prop.isValid()) {
+        i = prop.toInt();
+    }
+    else {
+        i = 0;
+    }
 
     if(reply->error()) {
 
@@ -222,4 +233,7 @@ void MultiDownloader::on_one_read(QNetworkReply* reply)
 
 void MultiDownloader::cancel() {
     m_cancelledMarker.fetchAndStoreAcquire(true);
+    disconnect(manager, &QNetworkAccessManager::finished, 0, 0);
+    emit need_abort();
+    emit on_all_done(MultiDownloader::err_cancel, 0, "");
 }

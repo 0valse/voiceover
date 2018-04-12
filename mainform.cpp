@@ -64,7 +64,7 @@ void MainForm::getData()
                 this, &MainForm::onReady);
         connect(ui->pushButtonStop, &QPushButton::clicked,
                 task, &MultiDownloader::cancel);
-        connect(task, &MultiDownloader::on_canceled,
+        connect(task, &MultiDownloader::need_abort,
                 this, &MainForm::canceled);
         //QThreadPool::globalInstance()->start(task);
         task->run();
@@ -132,11 +132,16 @@ void MainForm::onReadingFinished(int err_code, int err_files, QString outfile_na
             msg.append(QString::fromUtf8("Не удалось обработать %1 фрагментов.").arg(err_files));
             break;
         }
+        case MultiDownloader::err_cancel: {
+            break;
+        }
     }
-    msg.append("\n");
-    msg.append(QString::fromUtf8("Выходной файл тут: %1").arg(outfile_name));
-    msgBox.setText(msg);
-    msgBox.exec();
+    if (!msg.isEmpty()) {
+        msg.append("\n");
+        msg.append(QString::fromUtf8("Выходной файл тут: %1").arg(outfile_name));
+        msgBox.setText(msg);
+        msgBox.exec();
+    }
     
     qDebug() << "all_done" << ": " << err_code << ": " << err_files <<": " << outfile_name;
 }
