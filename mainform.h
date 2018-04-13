@@ -20,6 +20,7 @@
 #define MAINFORM_H
 
 #include <QWidget>
+#include <QMediaPlayer>
 
 #include "multidownloader.h"
 #include "ui_mainform.h"
@@ -47,6 +48,8 @@ private slots:
 
 private:
     Ui::Form* ui;
+    QMediaPlayer *m_player;
+    QMediaPlaylist *plst;
     
 };
 

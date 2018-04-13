@@ -29,6 +29,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QMediaPlayer>
+#include <QMediaPlaylist>
 
 #include "ui_mainform.h"
 #include "mainform.h"
@@ -43,6 +44,27 @@ MainForm::MainForm(QWidget *parent)
     connect(ui->toolButtonInput, &QToolButton::clicked, this, &MainForm::on_setFileName);
     connect(ui->lineEdit, &QLineEdit::textChanged, this, &MainForm::on_go_ready);
     connect(ui->pushButtonPlay, &QPushButton::clicked, this, &MainForm::play_toggle);
+    
+    m_player = new QMediaPlayer(this);
+    m_player->setVolume(100);
+
+    plst = new QMediaPlaylist(m_player);
+    
+    QVariant data;
+    for (int i = 0; i < ui->comboBoxSpeaker->model()->rowCount(); ++i) {
+        data = ui->comboBoxSpeaker->model()->index(i, 0).data();
+        if (data.canConvert<QString>()) {
+           plst->addMedia(
+                QUrl(
+                    QString("qrc:/examples/%1").arg(data.value<QString>())
+                )
+            );
+        } else {
+           plst->addMedia(QUrl());
+        }
+    }
+    
+    m_player->setPlaylist(plst);
 }
 
 MainForm::~MainForm()
@@ -81,6 +103,7 @@ void MainForm::on_setFileName() {
                                                "Выбрать текстовый файл",
                                                QDir::currentPath(),
                                                "Text (*.txt)");
+    qDebug() << str;
     if (!str.isEmpty()) {
         QFileInfo check_file(MultiDownloader::prepare_out_file_name(str));
         QMessageBox::StandardButton reply;
@@ -96,7 +119,8 @@ void MainForm::on_setFileName() {
                 this->canceled();
             }
         } //if (check_file.exists() && check_file.isFile())
-    } //if (!str.isEmpty())
+    ui->lineEdit->setText(str);
+    } 
 }
 
 void MainForm::onReady(int max)
@@ -178,29 +202,37 @@ void MainForm::on_go_ready()
 
 
 void MainForm::play_toggle()
-{    
-    QMediaPlayer *m_player = new QMediaPlayer(this);
-    m_player->setVolume(70);
-    QUrl current_media = QUrl(
-        QString("qrc:/examples/%1").arg(ui->comboBoxSpeaker->currentText())
-    );
-    qDebug() << current_media;
-    qDebug() << m_player->state();
+{
+    int cur = ui->comboBoxSpeaker->currentIndex();
+    if (cur == -1) cur = 0;
     
-    m_player->setMedia(current_media);
-        m_player->play();
-/*
-    if (m_player->state() == QMediaPlayer::StoppedState) {
-        //m_player->stop();
-        m_player->setMedia(current_media);
-        m_player->play();
-        ui->pushButtonPlay->setText(QString::fromUtf8("Стоп"));
-    }
+    QIcon icon1;
+    icon1.addFile(QStringLiteral("."), QSize(), QIcon::Normal, QIcon::Off);
 
-    if (m_player->state() == QMediaPlayer::PlayingState) {
-        m_player->stop();
-        ui->pushButtonPlay->setText(QString::fromUtf8("Тест"));
+    switch (m_player->state()) {
+        case  QMediaPlayer::StoppedState: {
+            m_player->stop();
+            plst->setCurrentIndex(cur);
+            m_player->play();
+            ui->pushButtonPlay->setText(QString::fromUtf8("Стоп"));
+            
+            QString iconThemeName = QStringLiteral("media-playback-stop");
+            if (QIcon::hasThemeIcon(iconThemeName))
+                icon1 = QIcon::fromTheme(iconThemeName);
+
+            break;
+        }
+        case QMediaPlayer::PlayingState: {
+            m_player->stop();
+            ui->pushButtonPlay->setText(QString::fromUtf8("Тест"));
+            
+            QString iconThemeName = QStringLiteral("media-playback-start");
+            if (QIcon::hasThemeIcon(iconThemeName))
+                icon1 = QIcon::fromTheme(iconThemeName);
+            
+            break;
+        }
     }
-    */
+    ui->pushButtonPlay->setIcon(icon1);
 }
 
