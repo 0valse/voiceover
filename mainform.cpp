@@ -47,21 +47,14 @@ MainForm::MainForm(QWidget *parent)
 
     plst = new QMediaPlaylist(m_player);
     
-    QVariant data;
-    for (int i = 0; i < ui->comboBoxSpeaker->model()->rowCount(); ++i) {
-        data = ui->comboBoxSpeaker->model()->index(i, 0).data();
-        if (data.canConvert<QString>()) {
-           plst->addMedia(
-                QUrl(
-                    QString("qrc:/examples/%1").arg(data.value<QString>())
-                )
-            );
-        } else {
-           plst->addMedia(QUrl());
-        }
-    }
-    
     m_player->setPlaylist(plst);
+    
+    for (int i = 0; i < voicer.voicer_name.size(); ++i) {
+        ui->comboBoxSpeaker->addItem(voicer.voicer_name[i]);
+        plst->addMedia(QUrl(
+                QString("qrc:/examples/%1").arg(voicer.voicer[i]))
+        );
+    }
 }
 
 MainForm::~MainForm()
@@ -75,8 +68,8 @@ void MainForm::getData()
     ui->pushButtonGo->setEnabled(false);
     if (ui->lineEdit->text() != "") {
         MultiDownloader *task = new MultiDownloader(ui->lineEdit->text(),
-                                                    ui->comboBoxSpeaker->currentText(),
-						    this);
+                                                    voicer.voicer[ui->comboBoxSpeaker->currentIndex()],
+                                                    this);
         connect(task, &MultiDownloader::on_progress_change,
                 ui->progressBar, &QProgressBar::setValue);
         connect(task, &MultiDownloader::on_all_done,
@@ -98,11 +91,12 @@ void MainForm::getData()
 void MainForm::on_setFileName() {
     QString str = QFileDialog::getOpenFileName(this,
                                                "Выбрать текстовый файл",
-                                               QDir::currentPath(),
+                                               QDir::homePath(),
                                                "Text (*.txt)");
     qDebug() << str;
+    QString out_str = MultiDownloader::prepare_out_file_name(str);
     if (!str.isEmpty()) {
-        QFileInfo check_file(MultiDownloader::prepare_out_file_name(str));
+        QFileInfo check_file(out_str);
         QMessageBox::StandardButton reply;
         if (check_file.exists() && check_file.isFile()) {
             reply = QMessageBox::question(this,
@@ -112,11 +106,13 @@ void MainForm::on_setFileName() {
             );
             if (reply == QMessageBox::Yes) {
                 ui->lineEdit->setText(str);
+                ui->lineEditAudio->setText(out_str);
             } else {
                 this->canceled();
             }
         } //if (check_file.exists() && check_file.isFile())
     ui->lineEdit->setText(str);
+    ui->lineEditAudio->setText(out_str);
     } 
 }
 
@@ -205,6 +201,7 @@ void MainForm::canceled()
     ui->pushButtonGo->setEnabled(false);
     ui->progressBar->setValue(0);
     ui->lineEdit->setText("");
+    ui->lineEditAudio->setText("");
 }
 
 void MainForm::on_go_ready()

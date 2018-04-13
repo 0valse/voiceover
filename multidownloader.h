@@ -18,7 +18,10 @@
 const int MAX_FILE_SIZE = 1 * 1024 * 1025;
 const int MAX_TEXT_URL = 2000;
 
-const QString KEY = "a3a66d18-e9d2-43af-9408-36a30416baed"; // TODO: use Qlist later
+const QStringList KEYS = QStringList() 
+                        << "1e1c8209-76c4-4adb-a301-0096fd8c3328"
+                        << "adf6c4d1-3235-4abf-ad90-1b3d0d658875"
+                        << "d06121cf-acc6-4e2d-8ecc-e20f89ece962";
 const QString URL_TEMPLATE = "https://tts.voicetech.yandex.net/generate?text=\"%2\"&format=%3&lang=ru-RU&speaker=%4&emotion=good&speed=%5&key=%1";
 //const QString URL_TEMPLATE ="http://200ok-debian.rd.ptsecurity.ru:8000/get?text=\"%2\"&format=%3&lang=ru-RU&speaker=%4&emotion=good&speed=%5&key=%1";
 const QString OUT_FORMAT = "mp3";
@@ -54,6 +57,23 @@ const QList<QString> UA = QList<QString>()
     << "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36"
     << "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:49.0) Gecko/20100101 Firefox/49.0";
 // END const
+
+    
+struct Voicers {
+    QStringList voicer;
+    QStringList voicer_name;
+    Voicers(QStringList v, QStringList n) : voicer(v), voicer_name(n) {}
+};
+static const struct Voicers voicer(
+                        QStringList() << "jane" << "oksana" << "alyss" << "omazh" << "zahar" << "ermil",
+                        QStringList()
+                            << QString::fromUtf8("Яна")
+                            << QString::fromUtf8("Оксана")
+                            << QString::fromUtf8("Алиса")
+                            << QString::fromUtf8("Омаж")
+                            << QString::fromUtf8("Захар")
+                            << QString::fromUtf8("Ермил")
+                                  );
 
 
 class MultiDownloader : public QObject

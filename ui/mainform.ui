@@ -137,36 +137,6 @@
          <property name="toolTip">
           <string>Варианты голосов озвучки</string>
          </property>
-         <item>
-          <property name="text">
-           <string>jane</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>oksana</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>alyss</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>omazh</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>zahar</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>ermil</string>
-          </property>
-         </item>
         </widget>
        </item>
        <item>

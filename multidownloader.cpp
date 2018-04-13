@@ -72,10 +72,11 @@ void MultiDownloader::run()
     }
 
     QNetworkReply *rpl;
+    int rand_num;
     for (int i = 0; i < in_list.size(); ++i) {
         QNetworkRequest r;
         r.setUrl(in_list[i]);
-        int rand_num = QRandomGenerator::global()->bounded(0, UA.size());
+        rand_num = QRandomGenerator::global()->bounded(0, UA.size());
         r.setHeader(QNetworkRequest::UserAgentHeader, UA[rand_num]);
         rpl = manager->get(r);
         rpl->setProperty(getCounter, QVariant(i));
@@ -144,13 +145,18 @@ void MultiDownloader::_text2urls() {
     QString text = "";
     QString _tmp_txt;
     int count = 0;
+    int rand_num;
     for (int i = 0; i < slines.size(); ++i) {
       _tmp_txt = slines[i].trimmed();
+
+      rand_num = QRandomGenerator::global()->bounded(0, KEYS.size());
+      
       if (QUrl::toPercentEncoding(text).size() + QUrl::toPercentEncoding(_tmp_txt).size() + 1 < MAX_TEXT_URL) {
            text.append(_tmp_txt).append(". ");
       } else {
          in_list[count] = QUrl(
-             URL_TEMPLATE.arg(KEY, text.trimmed(), OUT_FORMAT, speaker, QString::number(speed))
+             URL_TEMPLATE.arg(KEYS[rand_num], text.trimmed(),
+                              OUT_FORMAT, speaker, QString::number(speed))
          );
          ++count;
         
@@ -160,10 +166,13 @@ void MultiDownloader::_text2urls() {
       }
     }
     // add last
-    if (!text.isEmpty())
+    if (!text.isEmpty()) {
+        rand_num = QRandomGenerator::global()->bounded(0, KEYS.size());
         in_list[count] = QUrl(
-             URL_TEMPLATE.arg(KEY, text.trimmed(), OUT_FORMAT, speaker, QString::number(speed))
-         );
+             URL_TEMPLATE.arg(KEYS[rand_num], text.trimmed(),
+                              OUT_FORMAT, speaker, QString::number(speed))
+        );
+    }
     slines.clear();
     emit ready_voiced(in_list.size());
 }
@@ -222,8 +231,6 @@ void MultiDownloader::on_one_read(QNetworkReply* reply)
         if (key_err) {
             emit on_all_done(MultiDownloader::err_key_error, 0, "");
         } else {
-            qDebug() << "all done";
-                
             QMapIterator<int, QByteArray> i(out_list);
             while (i.hasNext()) {
                 i.next();
