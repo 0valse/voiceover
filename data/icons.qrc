@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="/">
+    <file>megaphone.svg</file>
+  </qresource>
+</RCC>
