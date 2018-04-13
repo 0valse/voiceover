@@ -67,11 +67,11 @@ public:
         err_redirect,
         err_read_file,
         err_write_file,
-        err_write_with_errors,
         err_unsupported_mime_input_file,
         err_unsupported_encoding_input_file,
         err_cancel,
         warn_not_voiced,
+        err_key_error
     };
     const int max_redirects = 5;  
     MultiDownloader(QString in_file_name, QString _speaker, QObject *parent = 0);
@@ -90,6 +90,7 @@ public slots:
     void on_one_read(QNetworkReply *reply);
 
 private:
+    bool key_err = false;
     QString speaker;
     float speed = 0.9;
     QFile *in_file = new QFile();

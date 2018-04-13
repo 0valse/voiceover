@@ -1,7 +1,4 @@
 /*
- * <one line to give the program's name and a brief idea of what it does.>
- * Copyright (C) 2018  Alexandr Ovsyannikov <aovsyannikov@ptsecurity.com>
- *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -133,56 +130,72 @@ void MainForm::onReadingFinished(int err_code, int err_files, QString outfile_na
 {
     this->canceled();
     
-    QMessageBox msgBox;
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle("Озвучка завершена");
+    msgBox.setTextFormat(Qt::RichText); // this does the magic trick and allows you to click the link
+    
     QString msg = "";
     
-    switch ( err_code ) {
+    switch (err_code) {
         case MultiDownloader::ok: {
-            msg.append(QString::fromUtf8("Все готово!"));
+            msg.append(
+                QString::fromUtf8("Все готово!<br />") +
+                QString::fromUtf8("Выходной файл тут: <a href=\"%1\">%1</a>").arg(outfile_name)
+            );
+            msgBox.setIcon(QMessageBox::Information);
             break;
         }
         case MultiDownloader::err_network: {
+            msgBox.setIcon(QMessageBox::Critical);
             msg.append(QString::fromUtf8("Ошибка сети!"));
             break;
         } 
         case MultiDownloader::err_redirect: {
+            msgBox.setIcon(QMessageBox::Critical);
             msg.append(QString::fromUtf8("Ошибка сети!"));
             break;
         }
         case MultiDownloader::err_read_file: {
+            msgBox.setIcon(QMessageBox::Critical);
             msg.append(QString::fromUtf8("Ошибка! Не удается прочитать файл!"));
             break;
         }
         case MultiDownloader::err_write_file: {
+            msgBox.setIcon(QMessageBox::Critical);
             msg.append(QString::fromUtf8("Ошибка! Не удается записать в выходной файла!"));
             break;
         }
         case MultiDownloader::err_unsupported_mime_input_file: {
+            msgBox.setIcon(QMessageBox::Critical);
             msg.append(QString::fromUtf8("Ошибка! Не поддерживаемый тип файла!"));
             break;
         }
-        case MultiDownloader::err_write_with_errors: {
-        }
         case MultiDownloader::err_unsupported_encoding_input_file: {
-            msg.append(QString::fromUtf8("Ошибка! Не поддерживаемая кодировка текстового файла!"));
+            msgBox.setIcon(QMessageBox::Critical);
+            msg.append(
+                QString::fromUtf8("Ошибка! Не поддерживаемая кодировка текстового файла!")
+            );
             break;
         }
         case MultiDownloader::warn_not_voiced: {
-            msg.append("\n");
-            msg.append(QString::fromUtf8("Не удалось обработать %1 фрагментов.").arg(err_files));
+            msgBox.setIcon(QMessageBox::Warning);
+            msg.append("Все готово!<br />");
+            msg.append(QString::fromUtf8("Не удалось обработать %1 фрагмент(a/ов).").arg(err_files));
             break;
         }
         case MultiDownloader::err_cancel: {
+            msgBox.setIcon(QMessageBox::Warning);
+            msg.append("Озвучка прервана");
+            break;
+        }
+        case MultiDownloader::err_key_error: {
+            msgBox.setIcon(QMessageBox::Critical);
+            msg.append("Ошибка доступа к серверу озвучки!");
             break;
         }
     }
-    if (!msg.isEmpty()) {
-        msg.append("\n");
-        msg.append(QString::fromUtf8("Выходной файл тут: %1").arg(outfile_name));
-        msgBox.setText(msg);
-        msgBox.exec();
-    }
-    
+    msgBox.setText(msg);
+    msgBox.exec();
     qDebug() << "all_done" << ": " << err_code << ": " << err_files <<": " << outfile_name;
 }
 
@@ -196,10 +209,11 @@ void MainForm::canceled()
 
 void MainForm::on_go_ready()
 {
-    ui->pushButtonStop->setEnabled(false);
-    ui->pushButtonGo->setEnabled(true);
+   if (ui->lineEdit->text() != "") {
+        ui->pushButtonStop->setEnabled(false);
+        ui->pushButtonGo->setEnabled(true);
+   }
 }
-
 
 void MainForm::play_toggle()
 {
@@ -210,6 +224,7 @@ void MainForm::play_toggle()
     icon1.addFile(QStringLiteral("."), QSize(), QIcon::Normal, QIcon::Off);
 
     switch (m_player->state()) {
+        case  QMediaPlayer::PausedState:
         case  QMediaPlayer::StoppedState: {
             m_player->stop();
             plst->setCurrentIndex(cur);

@@ -1,7 +1,4 @@
 /*
- * <one line to give the program's name and a brief idea of what it does.>
- * Copyright (C) 2018  Alexandr Ovsyannikov <aovsyannikov@ptsecurity.com>
- *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -139,7 +136,8 @@ void MultiDownloader::_text2urls() {
     buf.clear();
     
     s = s.trimmed().replace(".\n", ". ").replace("\n", ". ").simplified();
-    s.replace("   ", " ").replace("  ", " ").replace("..", ".");
+    s = s.replace("   ", " ").replace("  ", " ").replace("..", ".");
+    s = s.replace(";.", ";").replace(":.", ":").replace("?.", "?").replace("!.", "!").replace("***", "\n");
 
     QStringList slines = s.split(". ");
     
@@ -155,6 +153,9 @@ void MultiDownloader::_text2urls() {
              URL_TEMPLATE.arg(KEY, text.trimmed(), OUT_FORMAT, speaker, QString::number(speed))
          );
          ++count;
+        
+         qDebug() << text;
+         
          text.clear();
       }
     }
@@ -170,19 +171,31 @@ void MultiDownloader::_text2urls() {
 
 void MultiDownloader::on_one_read(QNetworkReply* reply)
 {
+    int in_size = in_list.size();
+    int out_size = out_list.size() + 1;
+    int code;
+    int ret_code;
+
+    QVariant var = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+    if (var.canConvert<int>()) {
+        ret_code = var.toInt();
+    } else {
+        ret_code = 0;
+    }
+    
     if(m_cancelledMarker.testAndSetAcquire(true, true)) {
         if (out_file->isOpen())
             out_file->close();
         reply->abort();
         return;
     } else {
-        emit on_progress_change(out_list.size()+1);
+        emit on_progress_change(out_size);
     }
 
     QNetworkRequest r = reply->request();
     QVariant prop = reply->property(getCounter);
     int i;
-    if (prop.isValid()) {
+    if (prop.canConvert<int>()) {
         i = prop.toInt();
     }
     else {
@@ -190,41 +203,45 @@ void MultiDownloader::on_one_read(QNetworkReply* reply)
     }
 
     if(reply->error()) {
+        // key problems: ret code 423
+        if (ret_code == 423) key_err = true;
 
         qDebug() << "ERROR";
         qDebug() << reply->errorString();
+
         err_texts.append(r.url());
+
         // запишем пустой массив
         out_list[i] = QByteArray();
 
     } else { // if(reply->error())
-
         out_list[i] = reply->readAll();
-        int in_size = in_list.size();
-        int out_size = out_list.size();
+    }
 
-        if (in_size == out_size) {
-            
+    if (in_size == out_size) {
+        if (key_err) {
+            emit on_all_done(MultiDownloader::err_key_error, 0, "");
+        } else {
+            qDebug() << "all done";
+                
             QMapIterator<int, QByteArray> i(out_list);
             while (i.hasNext()) {
                 i.next();
                 out_file->write(i.value());
             }
             out_file->close();
-
-            int code;
+            
             if (err_texts.isEmpty()) {
                 code = MultiDownloader::ok;
             } else {
                 code = MultiDownloader::warn_not_voiced;
             }
-
             emit on_all_done(code, err_texts.size(), out_file->fileName());
-
-        } //if (in_size == out_size)
-
+        }
     }
+    
     reply->deleteLater();
+    
 }
 
 void MultiDownloader::cancel() {
