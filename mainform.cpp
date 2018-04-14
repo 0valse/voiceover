@@ -48,6 +48,7 @@ MainForm::MainForm(QWidget *parent)
     plst = new QMediaPlaylist(m_player);
     
     m_player->setPlaylist(plst);
+    plst->setPlaybackMode(QMediaPlaylist::CurrentItemInLoop);
     
     for (int i = 0; i < voicer.voicer_name.size(); ++i) {
         ui->comboBoxSpeaker->addItem(voicer.voicer_name[i]);
