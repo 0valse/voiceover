@@ -67,11 +67,11 @@ struct Voicers {
 static const struct Voicers voicer(
                         QStringList()
 				<< "zahar"
-				<< "ermil",
+				<< "ermil"
 				<< "oksana"
 				<< "alyss"
 				<< "omazh"
-				<< "jane"
+				<< "jane",
                         QStringList()
                             << QString::fromUtf8("Захар")
                             << QString::fromUtf8("Ермил")
