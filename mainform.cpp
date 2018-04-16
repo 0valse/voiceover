@@ -13,6 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QMainWindow>
 #include <QWidget>
 #include <QPushButton>
 #include <QToolButton>
@@ -34,13 +35,19 @@
 
 
 MainForm::MainForm(QWidget *parent)
-    : QWidget(parent), ui(new Ui::Form)
+    : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     connect(ui->pushButtonGo, &QPushButton::clicked, this, &MainForm::getData);
     connect(ui->toolButtonInput, &QToolButton::clicked, this, &MainForm::on_setFileName);
     connect(ui->lineEdit, &QLineEdit::textChanged, this, &MainForm::on_go_ready);
     connect(ui->pushButtonPlay, &QPushButton::clicked, this, &MainForm::play_toggle);
+    
+    /*QProgressBar *progressBar = new QProgressBar();
+    progressBar->setToolTip(QString::fromUtf8("Прогресс выполнения озвучки"));
+    progressBar->setValue(0);
+    ui->statusBar().addWidget(progressBar);
+    */
     
     m_player = new QMediaPlayer(this);
     m_player->setVolume(100);
@@ -68,9 +75,9 @@ void MainForm::getData()
     ui->pushButtonStop->setEnabled(true);
     ui->pushButtonGo->setEnabled(false);
     if (ui->lineEdit->text() != "") {
-        MultiDownloader *task = new MultiDownloader(ui->lineEdit->text(),
-                                                    voicer.voicer[ui->comboBoxSpeaker->currentIndex()],
-                                                    this);
+        task = new MultiDownloader(ui->lineEdit->text(),
+                                voicer.voicer[ui->comboBoxSpeaker->currentIndex()],
+                                this);
         connect(task, &MultiDownloader::on_progress_change,
                 ui->progressBar, &QProgressBar::setValue);
         connect(task, &MultiDownloader::on_all_done,

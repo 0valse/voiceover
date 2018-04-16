@@ -16,6 +16,7 @@
 #ifndef MAINFORM_H
 #define MAINFORM_H
 
+#include <QMainWindow>
 #include <QWidget>
 #include <QMediaPlayer>
 
@@ -23,15 +24,15 @@
 #include "ui_mainform.h"
 
 namespace Ui {
-class MainForm;
+class MainWindow;
 }
 
-class MainForm : public QWidget
+class MainForm : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainForm(QWidget *parent = 0);
+    explicit MainForm(QWidget* parent = 0);
     ~MainForm();
 
 private slots:
@@ -44,9 +45,10 @@ private slots:
     void play_toggle();
 
 private:
-    Ui::Form* ui;
+    Ui::MainWindow* ui;
     QMediaPlayer *m_player;
     QMediaPlaylist *plst;
+    MultiDownloader *task;
     
 };
 
