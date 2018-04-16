@@ -54,6 +54,7 @@ QString MultiDownloader::prepare_out_file_name(QString in_file_name) {
     lst << OUT_FORMAT;
 
     out = lst.join('.');
+
     return out;
 }
 
@@ -108,7 +109,7 @@ void MultiDownloader::_text2urls() {
     in_file->close();
 
     QMimeType mtype = QMimeDatabase().mimeTypeForData(buf);
-    qDebug() << mtype.name();
+    qDebug() << "File MIME type: " << mtype.name();
     
     if (mtype.name() != VALID_MIME ) {
         emit on_all_done(MultiDownloader::err_unsupported_mime_input_file, 0, "");
@@ -127,7 +128,7 @@ void MultiDownloader::_text2urls() {
     const char *encode_page = strdup(uchardet_get_charset(upage));
     uchardet_delete(upage);
     
-    qDebug() << encode_page;
+    qDebug() << "File codec: " << encode_page;
     QTextCodec *codec = QTextCodec::codecForName(encode_page);
 
     encode_page = nullptr;
@@ -139,7 +140,7 @@ void MultiDownloader::_text2urls() {
     s = s.trimmed().replace(".\n", ". ").replace("\n", ". ").simplified();
     s = s.replace("   ", " ").replace("  ", " ").replace("..", ".");
     s = s.replace(";.", ";").replace(":.", ":").replace("?.", "?").replace("!.", "!").replace("***", "\n");
-
+    
     QStringList slines = s.split(". ");
     
     QString text = "";
@@ -159,10 +160,11 @@ void MultiDownloader::_text2urls() {
                               OUT_FORMAT, speaker, QString::number(speed))
          );
          ++count;
-        
-         qDebug() << text;
          
+         qDebug() << "Text: " << text;
+
          text.clear();
+         text.append(_tmp_txt).append(". ");
       }
     }
     // add last
@@ -172,7 +174,9 @@ void MultiDownloader::_text2urls() {
              URL_TEMPLATE.arg(KEYS[rand_num], text.trimmed(),
                               OUT_FORMAT, speaker, QString::number(speed))
         );
+        qDebug() << "Last Text: " << text;
     }
+
     slines.clear();
     emit ready_voiced(in_list.size());
 }
