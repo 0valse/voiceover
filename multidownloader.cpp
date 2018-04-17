@@ -22,9 +22,11 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
+#include <QNetworkProxy>
 #include <QObject>
 #include <QHashIterator>
 #include <QRandomGenerator>
+
 
 #include <uchardet/uchardet.h>
 
@@ -35,10 +37,19 @@ MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker, QObject
     : QObject(parent), speaker(_speaker), m_cancelledMarker(false)
 {
     manager = new QNetworkAccessManager(this);
+
     connect(manager, &QNetworkAccessManager::finished, this, &MultiDownloader::on_one_read);
     
     in_file->setFileName(in_file_name);
     out_file->setFileName(MultiDownloader::prepare_out_file_name(in_file_name));
+    
+    QNetworkProxy proxy;
+    proxy.setType(QNetworkProxy::HttpProxy);
+    proxy.setHostName("185.2.84.178");
+    proxy.setPort(80);
+
+    manager->setProxy(proxy);
+    
 }
 
 MultiDownloader::~MultiDownloader()
@@ -71,15 +82,16 @@ void MultiDownloader::run()
     if (!out_file->open(QIODevice::WriteOnly)) {
         emit on_all_done(MultiDownloader::err_write_file, 0, out_file->fileName());
     }
-
+    
     QNetworkReply *rpl;
-    int rand_num;
+    int rand_num = QRandomGenerator::global()->bounded(0, UA.size());
     for (int i = 0; i < in_list.size(); ++i) {
         QNetworkRequest r;
         r.setUrl(in_list[i]);
-        rand_num = QRandomGenerator::global()->bounded(0, UA.size());
         r.setHeader(QNetworkRequest::UserAgentHeader, UA[rand_num]);
+        
         rpl = manager->get(r);
+        
         rpl->setProperty(getCounter, QVariant(i));
         connect(this, &MultiDownloader::need_abort, rpl, &QNetworkReply::abort);
     }
@@ -196,6 +208,8 @@ void MultiDownloader::on_one_read(QNetworkReply* reply)
         ret_code = 0;
     }
     
+    qDebug() << "Retcode: " << ret_code;
+    
     if(m_cancelledMarker.testAndSetAcquire(true, true)) {
         if (out_file->isOpen())
             out_file->close();
@@ -250,7 +264,7 @@ void MultiDownloader::on_one_read(QNetworkReply* reply)
             emit on_all_done(code, err_texts.size(), out_file->fileName());
         }
     }
-    
+
     reply->deleteLater();
     
 }

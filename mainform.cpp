@@ -43,12 +43,6 @@ MainForm::MainForm(QWidget *parent)
     connect(ui->lineEdit, &QLineEdit::textChanged, this, &MainForm::on_go_ready);
     connect(ui->pushButtonPlay, &QPushButton::clicked, this, &MainForm::play_toggle);
     
-    /*QProgressBar *progressBar = new QProgressBar();
-    progressBar->setToolTip(QString::fromUtf8("Прогресс выполнения озвучки"));
-    progressBar->setValue(0);
-    ui->statusBar().addWidget(progressBar);
-    */
-    
     m_player = new QMediaPlayer(this);
     m_player->setVolume(100);
 
