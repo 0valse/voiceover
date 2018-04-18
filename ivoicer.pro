@@ -14,6 +14,7 @@ QMAKE_EXTRA_TARGETS += uchardetDep
 PRE_TARGETDEPS += uchardetDep
 
 LIBS += uchardet-0.0.6/src/libuchardet.a
+INCLUDEPATH += uchardet-0.0.6/src
 
 MOC_DIR = build/moc
 OBJECTS_DIR = build/src

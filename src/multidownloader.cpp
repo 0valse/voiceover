@@ -28,7 +28,7 @@
 #include <QRandomGenerator>
 
 
-#include <uchardet/uchardet.h>
+#include <uchardet.h>
 
 #include "multidownloader.h"
 
