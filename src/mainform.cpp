@@ -28,16 +28,16 @@
 #include <QFileInfo>
 #include <QMediaPlayer>
 #include <QMediaPlaylist>
+#include <QAction>
 
 #include "ui_mainform.h"
 
 #include "mainform.h"
-#include "settingsform.h"
-#include "aboutform.h"
+
 
 
 MainForm::MainForm(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
@@ -60,15 +60,27 @@ MainForm::MainForm(QWidget *parent)
                 QString("qrc:/examples/%1").arg(voicer.voicer[i]))
         );
     }
-    about = new AboutForm;
-    settings = new SettingsForm;
-    about->show();
+
+    QObject::connect(ui->actionAbout, &QAction::triggered, this, &MainForm::show_about);
+    QObject::connect(ui->actionSettings, &QAction::triggered, this, &MainForm::show_settings);
 }
 
 MainForm::~MainForm()
 {
     delete ui;
 }
+
+
+void MainForm::show_about()
+{
+    about.show();
+}
+
+void MainForm::show_settings()
+{
+    settings.show();
+}
+
 
 void MainForm::getData()
 {

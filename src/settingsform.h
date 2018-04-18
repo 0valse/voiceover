@@ -8,9 +8,7 @@ namespace Ui
 class SettingsForm;
 }
 
-/**
- * @todo write docs
- */
+
 class SettingsForm : public QWidget
 {
     Q_OBJECT
@@ -20,7 +18,7 @@ public:
     ~SettingsForm();
 
 private:
-    Ui::SettingsForm* ui;
+    Ui::SettingsForm* settings_ui;
 };
 
 #endif // SETTINGSFORM_H

@@ -23,6 +23,11 @@
 #include "multidownloader.h"
 #include "ui_mainform.h"
 
+#include "mainform.h"
+
+#include "settingsform.h"
+#include "aboutform.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -43,6 +48,8 @@ private slots:
     void canceled();
     void on_go_ready();
     void play_toggle();
+    void show_about();
+    void show_settings();
 
 private:
     Ui::MainWindow* ui;
@@ -50,8 +57,8 @@ private:
     QMediaPlaylist *plst;
     MultiDownloader *task;
     
-    QWidget *about;
-    QWidget *settings;
+    AboutForm about;
+    SettingsForm settings;
 };
 
 #endif // MAINFORM_H

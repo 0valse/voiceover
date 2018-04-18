@@ -3,11 +3,11 @@
 
 SettingsForm::SettingsForm()
 {
-    ui = new Ui::SettingsForm;
-    ui->setupUi(this);
+    settings_ui = new Ui::SettingsForm;
+    settings_ui->setupUi(this);
 }
 
 SettingsForm::~SettingsForm()
 {
-    delete ui;
+    delete settings_ui;
 }

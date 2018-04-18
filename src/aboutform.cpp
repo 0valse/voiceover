@@ -3,11 +3,11 @@
 
 AboutForm::AboutForm()
 {
-    ui = new Ui::AboutForm;
-    ui->setupUi(this);
+    about_ui = new Ui::AboutForm;
+    about_ui->setupUi(this);
 }
 
 AboutForm::~AboutForm()
 {
-    delete ui;
+    delete about_ui;
 }

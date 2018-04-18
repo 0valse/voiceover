@@ -18,8 +18,9 @@ public:
     AboutForm();
     ~AboutForm();
 
+
 private:
-    Ui::AboutForm* ui;
+    Ui::AboutForm* about_ui;
 };
 
 #endif // ABOUTFORM_H
