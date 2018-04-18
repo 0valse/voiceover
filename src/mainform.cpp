@@ -30,14 +30,17 @@
 #include <QMediaPlaylist>
 
 #include "ui_mainform.h"
-#include "mainform.h"
 
+#include "mainform.h"
+#include "settingsform.h"
+#include "aboutform.h"
 
 
 MainForm::MainForm(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow)
+    : QMainWindow(parent)
 {
     ui->setupUi(this);
+
     connect(ui->pushButtonGo, &QPushButton::clicked, this, &MainForm::getData);
     connect(ui->toolButtonInput, &QToolButton::clicked, this, &MainForm::on_setFileName);
     connect(ui->lineEdit, &QLineEdit::textChanged, this, &MainForm::on_go_ready);
@@ -57,6 +60,9 @@ MainForm::MainForm(QWidget *parent)
                 QString("qrc:/examples/%1").arg(voicer.voicer[i]))
         );
     }
+    about = new AboutForm;
+    settings = new SettingsForm;
+    about->show();
 }
 
 MainForm::~MainForm()

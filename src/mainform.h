@@ -32,7 +32,7 @@ class MainForm : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainForm(QWidget* parent = 0);
+    MainForm(QWidget* parent = 0);
     ~MainForm();
 
 private slots:
@@ -50,6 +50,8 @@ private:
     QMediaPlaylist *plst;
     MultiDownloader *task;
     
+    QWidget *about;
+    QWidget *settings;
 };
 
 #endif // MAINFORM_H

@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>FormAbout</class>
- <widget class="QWidget" name="FormAbout">
+ <class>AboutForm</class>
+ <widget class="QWidget" name="AboutForm">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -34,7 +37,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="../data/icons.qrc">:/megaphone.svg</pixmap>
+        <pixmap resource="../data/icons/icons.qrc">:/megaphone.svg</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -121,7 +124,25 @@
   </layout>
  </widget>
  <resources>
-  <include location="../data/icons.qrc"/>
+  <include location="../data/icons/icons.qrc"/>
+  <include location="../data/icons/icons.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>pushButtonClose</sender>
+   <signal>clicked()</signal>
+   <receiver>AboutForm</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>424</x>
+     <y>359</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>239</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

@@ -2,19 +2,29 @@ TEMPLATE = app
 
 QT += widgets network multimedia
 
-FORMS += ui/mainform.ui
-RESOURCES += data/audio/music.qrc data/icons/icons.qrc
+FORMS += ui/mainform.ui \
+         ui/aboutform.ui \
+         ui/settingsform.ui
+RESOURCES += data/audio/music.qrc \
+             data/icons/icons.qrc
 
-SOURCES += src/main.cpp src/mainform.cpp src/multidownloader.cpp
-HEADERS += src/mainform.h src/multidownloader.h
+SOURCES += src/main.cpp \
+           src/mainform.cpp \
+           src/multidownloader.cpp \
+           src/aboutform.cpp \
+           src/settingsform.cpp
+HEADERS += src/mainform.h \
+           src/multidownloader.h \
+           src/aboutform.h \
+           src/settingsform.h
 
 #uchardetDep.target = uchardet-0.0.6/src/libuchardet.a
-uchardetDep.commands = cd uchardet-0.0.6 && cmake . && make clean && make libuchardet_static
+uchardetDep.commands = mkdir $$PWD/build/uchardet ; cd $$PWD/build/uchardet && cmake $$PWD/uchardet-0.0.6 && make clean && make libuchardet_static && cd $$PWD/build
 QMAKE_EXTRA_TARGETS += uchardetDep
 PRE_TARGETDEPS += uchardetDep
 
-LIBS += uchardet-0.0.6/src/libuchardet.a
-INCLUDEPATH += uchardet-0.0.6/src
+LIBS += $$PWD/uchardet-0.0.6/src/libuchardet.a
+INCLUDEPATH += $$PWD/uchardet-0.0.6/src
 
 MOC_DIR = build/moc
 OBJECTS_DIR = build/src
