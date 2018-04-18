@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>526</width>
-    <height>278</height>
+    <width>637</width>
+    <height>430</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -20,67 +20,11 @@
    <string>iVoicer</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../data/icons.qrc">
+   <iconset resource="../data/icons/icons.qrc">
     <normaloff>:/megaphone.svg</normaloff>:/megaphone.svg</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_4">
-    <item>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
-      <item>
-       <widget class="QLabel" name="label">
-        <property name="minimumSize">
-         <size>
-          <width>250</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Текстовый файл для озвучки:</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QLineEdit" name="lineEdit">
-          <property name="readOnly">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="toolButtonInput">
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Выберите текстовый файл для озвучки...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <widget class="QLabel" name="labelAudioname">
-        <property name="text">
-         <string>Выходной аудиофайл:</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="lineEditAudio">
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
+   <layout class="QVBoxLayout" name="verticalLayout_6">
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
@@ -143,6 +87,208 @@
      </layout>
     </item>
     <item>
+     <widget class="QToolBox" name="toolBox">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>300</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Sunken</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="pageFile">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>625</width>
+         <height>238</height>
+        </rect>
+       </property>
+       <attribute name="label">
+        <string>Озвучить файл</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="minimumSize">
+             <size>
+              <width>250</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Текстовый файл для озвучки:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QLineEdit" name="lineEdit">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QToolButton" name="toolButtonInput">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Выберите текстовый файл для озвучки...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="text">
+               <string>...</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QLabel" name="labelAudioname">
+            <property name="text">
+             <string>Выходной аудиофайл:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEditAudio">
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QProgressBar" name="progressBar">
+            <property name="value">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Minimum</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButtonGo">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="toolTip">
+             <string>Начать озвучку</string>
+            </property>
+            <property name="text">
+             <string>Озвучить</string>
+            </property>
+            <property name="icon">
+             <iconset theme="audio-ready"/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButtonStop">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="toolTip">
+             <string>Прервать процедуру озвучки</string>
+            </property>
+            <property name="text">
+             <string>Стоп</string>
+            </property>
+            <property name="icon">
+             <iconset theme="process-stop">
+              <normaloff>.</normaloff>.</iconset>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pageInteraction">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>625</width>
+         <height>238</height>
+        </rect>
+       </property>
+       <attribute name="label">
+        <string>Прочитать текст</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <widget class="QTextEdit" name="textEdit">
+          <property name="acceptRichText">
+           <bool>false</bool>
+          </property>
+          <property name="placeholderText">
+           <string>Напишите тут текст для начитки...</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <spacer name="horizontalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButtonVoice">
+            <property name="text">
+             <string>Прочитать</string>
+            </property>
+            <property name="icon">
+             <iconset theme="media-playback-start"/>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item>
      <spacer name="verticalSpacer">
       <property name="orientation">
        <enum>Qt::Vertical</enum>
@@ -156,21 +302,11 @@
      </spacer>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
-       <widget class="QProgressBar" name="progressBar">
-        <property name="value">
-         <number>0</number>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer">
+       <spacer name="horizontalSpacer_3">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Minimum</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
@@ -181,36 +317,12 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButtonGo">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="toolTip">
-         <string>Начать озвучку</string>
-        </property>
+       <widget class="QPushButton" name="pushButton">
         <property name="text">
-         <string>Поехали</string>
+         <string>Закрыть</string>
         </property>
         <property name="icon">
-         <iconset theme="go-next">
-          <normaloff>.</normaloff>.</iconset>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pushButtonStop">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="toolTip">
-         <string>Прервать процедуру озвучки</string>
-        </property>
-        <property name="text">
-         <string>Стоп</string>
-        </property>
-        <property name="icon">
-         <iconset theme="process-stop">
-          <normaloff>.</normaloff>.</iconset>
+         <iconset theme="application-exit"/>
         </property>
        </widget>
       </item>
@@ -223,7 +335,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>526</width>
+     <width>637</width>
      <height>28</height>
     </rect>
    </property>
@@ -231,40 +343,58 @@
     <property name="title">
      <string>Файл</string>
     </property>
-    <addaction name="action"/>
-    <addaction name="action_2"/>
+    <addaction name="actionSettings"/>
+    <addaction name="actionQuit"/>
    </widget>
-   <widget class="QMenu" name="menu">
+   <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Помощь</string>
     </property>
-    <addaction name="action_3"/>
+    <addaction name="actionAbout"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menu"/>
+   <addaction name="menuHelp"/>
   </widget>
-  <action name="action">
+  <action name="actionSettings">
+   <property name="icon">
+    <iconset theme="settings-configure"/>
+   </property>
    <property name="text">
     <string>Настройки</string>
    </property>
+   <property name="shortcut">
+    <string>Alt+S</string>
+   </property>
   </action>
-  <action name="action_2">
+  <action name="actionQuit">
+   <property name="icon">
+    <iconset theme="application-exit"/>
+   </property>
    <property name="text">
     <string>Выход</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
   </action>
-  <action name="action_3">
+  <action name="actionAbout">
+   <property name="icon">
+    <iconset theme="help-about"/>
+   </property>
    <property name="text">
     <string>О программе</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+A</string>
    </property>
   </action>
  </widget>
  <resources>
-  <include location="../data/icons.qrc"/>
+  <include location="../data/icons/icons.qrc"/>
  </resources>
  <connections>
   <connection>
-   <sender>action_2</sender>
+   <sender>actionQuit</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>close()</slot>
@@ -276,6 +406,22 @@
     <hint type="destinationlabel">
      <x>260</x>
      <y>161</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>502</x>
+     <y>619</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>720</x>
+     <y>621</y>
     </hint>
    </hints>
   </connection>
