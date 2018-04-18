@@ -23,7 +23,7 @@ uchardetDep.commands = mkdir $$PWD/build/uchardet ; cd $$PWD/build/uchardet && c
 QMAKE_EXTRA_TARGETS += uchardetDep
 PRE_TARGETDEPS += uchardetDep
 
-LIBS += $$PWD/uchardet-0.0.6/src/libuchardet.a
+LIBS += $$PWD/build/uchardet/src/libuchardet.a
 INCLUDEPATH += $$PWD/uchardet-0.0.6/src
 
 MOC_DIR = build/moc
