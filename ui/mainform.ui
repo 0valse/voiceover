@@ -209,7 +209,8 @@
              <string>Озвучить</string>
             </property>
             <property name="icon">
-             <iconset theme="audio-ready"/>
+             <iconset theme="audio-ready">
+              <normaloff>.</normaloff>.</iconset>
             </property>
            </widget>
           </item>
@@ -274,11 +275,15 @@
           </item>
           <item>
            <widget class="QPushButton" name="pushButtonVoice">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Прочитать</string>
             </property>
             <property name="icon">
-             <iconset theme="media-playback-start"/>
+             <iconset theme="media-playback-start">
+              <normaloff>.</normaloff>.</iconset>
             </property>
            </widget>
           </item>
@@ -322,7 +327,8 @@
          <string>Закрыть</string>
         </property>
         <property name="icon">
-         <iconset theme="application-exit"/>
+         <iconset theme="application-exit">
+          <normaloff>.</normaloff>.</iconset>
         </property>
        </widget>
       </item>
@@ -357,7 +363,8 @@
   </widget>
   <action name="actionSettings">
    <property name="icon">
-    <iconset theme="settings-configure"/>
+    <iconset theme="settings-configure">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Настройки</string>
@@ -368,7 +375,8 @@
   </action>
   <action name="actionQuit">
    <property name="icon">
-    <iconset theme="application-exit"/>
+    <iconset theme="application-exit">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Выход</string>
@@ -379,7 +387,8 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset theme="help-about"/>
+    <iconset theme="help-about">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>О программе</string>
