@@ -1,18 +1,3 @@
-/*
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include <QIODevice>
 #include <QList>
 #include <QMimeDatabase>
@@ -31,6 +16,7 @@
 #include <uchardet.h>
 
 #include "multidownloader.h"
+#include "settings.h"
 
 
 MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker, QObject *parent)
@@ -43,13 +29,23 @@ MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker, QObject
     in_file->setFileName(in_file_name);
     out_file->setFileName(MultiDownloader::prepare_out_file_name(in_file_name));
     
-    QNetworkProxy proxy;
-    proxy.setType(QNetworkProxy::HttpProxy);
-    proxy.setHostName("185.2.84.178");
-    proxy.setPort(80);
-
-    manager->setProxy(proxy);
+    Settings settings;
+    ProxySettings proxy_settings = settings.loadProxySettings();
     
+    QNetworkProxy proxy;
+    if (proxy_settings.used) {
+        proxy.setType((QNetworkProxy::ProxyType)proxy_settings.type);
+        proxy.setHostName(proxy_settings.host);
+        proxy.setPort(proxy_settings.port);
+
+        if (!(proxy_settings.username.isEmpty() or proxy_settings.password.isEmpty())) {
+            proxy.setUser(proxy_settings.username);
+            proxy.setPassword(proxy_settings.password);
+        }
+    } else { // if (proxy_settings.used) {
+        proxy.setType(QNetworkProxy::NoProxy);
+    }
+    manager->setProxy(proxy);
 }
 
 MultiDownloader::~MultiDownloader()

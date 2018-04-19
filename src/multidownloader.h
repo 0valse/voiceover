@@ -62,7 +62,8 @@ const QList<QString> UA = QList<QString>()
 struct Voicers {
     QStringList voicer;
     QStringList voicer_name;
-    Voicers(QStringList v, QStringList n) : voicer(v), voicer_name(n) {}
+    Voicers(QStringList v, QStringList n)
+        : voicer(v), voicer_name(n) {}
 };
 static const struct Voicers voicer(
                         QStringList()

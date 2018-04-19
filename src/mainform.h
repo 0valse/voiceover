@@ -28,6 +28,8 @@
 #include "settingsform.h"
 #include "aboutform.h"
 
+
+
 namespace Ui {
 class MainWindow;
 }

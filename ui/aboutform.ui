@@ -14,7 +14,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>О приложении iVoicer</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../data/icons/icons.qrc">
+    <normaloff>:/megaphone.svg</normaloff>:/megaphone.svg</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -124,7 +128,6 @@
   </layout>
  </widget>
  <resources>
-  <include location="../data/icons/icons.qrc"/>
   <include location="../data/icons/icons.qrc"/>
  </resources>
  <connections>
