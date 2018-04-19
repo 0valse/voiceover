@@ -16,7 +16,7 @@
 
 // consts
 #define getCounter "getCounter"
-const int MAX_FILE_SIZE = 1 * 1024 * 1025;
+const int MAX_FILE_SIZE = 2 * 1024 * 1024;
 const int MAX_TEXT_URL = 2000;
 
 const QStringList KEYS = QStringList() 
