@@ -18,7 +18,7 @@ static const struct MyProxyTypes myproxytypes (
         << QNetworkProxy::HttpProxy
         << QNetworkProxy::Socks5Proxy,
     QStringList()
-        << "HTTP"
+        << "HTTPS"
         << "Socks5"
 );
 

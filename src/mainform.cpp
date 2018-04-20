@@ -31,9 +31,7 @@ MainForm::MainForm(QWidget *parent)
     connect(ui->pushButtonGo, &QPushButton::clicked, this, &MainForm::getData);
     connect(ui->toolButtonInput, &QToolButton::clicked, this, &MainForm::on_setFileName);
     connect(ui->lineEdit, &QLineEdit::textChanged, this, &MainForm::on_go_ready);
-    connect(ui->pushButtonPlay, &QPushButton::clicked, this, &MainForm::play_toggle);
-    connect(ui->textEdit, &QTextEdit::textChanged, this, &MainForm::onTextVoicedCan);
-    
+
     m_player = new QMediaPlayer(this);
     m_player->setVolume(100);
 
@@ -254,12 +252,4 @@ void MainForm::play_toggle()
         }
     }
     ui->pushButtonPlay->setIcon(icon1);
-}
-
-
-void MainForm::onTextVoicedCan()
-{
-    ui->pushButtonVoice->setEnabled(
-        !ui->textEdit->toPlainText().isEmpty()
-    );
 }

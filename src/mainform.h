@@ -52,7 +52,6 @@ private slots:
     void play_toggle();
     void show_about();
     void show_settings();
-    void onTextVoicedCan();
 
 private:
     Ui::MainWindow* ui;
