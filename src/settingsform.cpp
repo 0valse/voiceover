@@ -34,7 +34,7 @@ void SettingsForm::onSaveSettings()
     ProxySettings proxy_settings = settings.loadProxySettings();
 
     proxy_settings.used = settings_ui->checkBoxProxyUsed->isChecked();
-    proxy_settings.type = settings_ui->comboBoxProxyType->currentIndex();
+    proxy_settings.type = myproxytypes.type[settings_ui->comboBoxProxyType->currentIndex()];
     proxy_settings.host = settings_ui->lineEditProxyIP->text();
     proxy_settings.port = settings_ui->spinBoxProxyPort->value();
     proxy_settings.username = settings_ui->lineEditUser->text();

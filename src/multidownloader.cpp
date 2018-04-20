@@ -45,6 +45,7 @@ MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker, QObject
     } else { // if (proxy_settings.used) {
         proxy.setType(QNetworkProxy::NoProxy);
     }
+    qDebug() << proxy;
     manager->setProxy(proxy);
 }
 
