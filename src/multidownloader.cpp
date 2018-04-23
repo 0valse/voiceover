@@ -52,6 +52,14 @@ MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker, QObject
 MultiDownloader::~MultiDownloader()
 {
     _clean();
+    if (!in_file->isOpen()) {
+        in_file->close();
+    }
+    if (!out_file->isOpen()) {
+        out_file->close();
+    }
+    delete in_file;
+    delete out_file;
 }
 
 QString MultiDownloader::prepare_out_file_name(QString in_file_name) {
@@ -99,12 +107,6 @@ void MultiDownloader::_clean()
     out_list.clear();
     in_list.clear();
     err_texts.clear();
-    if (!in_file->isOpen()) {
-        in_file->close();
-    }    
-    if (!out_file->isOpen()) {
-        out_file->close();
-    }
 }
 
 
@@ -134,7 +136,8 @@ void MultiDownloader::_text2urls() {
         return;
     }
     uchardet_data_end(upage);
-    const char *encode_page = strdup(uchardet_get_charset(upage));
+    const char *encode_page;
+    encode_page = strdup(uchardet_get_charset(upage));
     uchardet_delete(upage);
     
     qDebug() << "File codec: " << encode_page;
