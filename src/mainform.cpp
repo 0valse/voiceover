@@ -31,6 +31,7 @@ MainForm::MainForm(QWidget *parent)
     connect(ui->pushButtonGo, &QPushButton::clicked, this, &MainForm::getData);
     connect(ui->toolButtonInput, &QToolButton::clicked, this, &MainForm::on_setFileName);
     connect(ui->lineEdit, &QLineEdit::textChanged, this, &MainForm::on_go_ready);
+    connect(ui->pushButtonPlay, &QPushButton::clicked, this, &MainForm::play_toggle);
 
     m_player = new QMediaPlayer(this);
     m_player->setVolume(100);
@@ -46,6 +47,7 @@ MainForm::MainForm(QWidget *parent)
                 QString("qrc:/examples/%1").arg(voicer.voicer[i]))
         );
     }
+    qDebug() << plst->mediaCount();
 
     QObject::connect(ui->actionAbout, &QAction::triggered, this, &MainForm::show_about);
     QObject::connect(ui->actionSettings, &QAction::triggered, this, &MainForm::show_settings);
@@ -226,6 +228,7 @@ void MainForm::play_toggle()
     QIcon icon1;
     icon1.addFile(QStringLiteral("."), QSize(), QIcon::Normal, QIcon::Off);
 
+    qDebug() << m_player->state();
     switch (m_player->state()) {
         case  QMediaPlayer::PausedState:
         case  QMediaPlayer::StoppedState: {
