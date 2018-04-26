@@ -8,40 +8,30 @@ FORMS += ui/mainform.ui \
 RESOURCES += data/audio/music.qrc \
              data/icons/icons.qrc
 
-SOURCES += src/main.cpp \
+
+UCHARDET_PATH = $$PWD/uchardet-0.0.6/src
+             
+CXX_FILES_TO_BUILD = $$UCHARDET_PATH/CharDistribution.cpp $$UCHARDET_PATH/JpCntx.cpp $$UCHARDET_PATH/LangModels/LangArabicModel.cpp $$UCHARDET_PATH/LangModels/LangBulgarianModel.cpp $$UCHARDET_PATH/LangModels/LangRussianModel.cpp $$UCHARDET_PATH/LangModels/LangEsperantoModel.cpp $$UCHARDET_PATH/LangModels/LangFrenchModel.cpp $$UCHARDET_PATH/LangModels/LangDanishModel.cpp $$UCHARDET_PATH/LangModels/LangGermanModel.cpp $$UCHARDET_PATH/LangModels/LangGreekModel.cpp $$UCHARDET_PATH/LangModels/LangHungarianModel.cpp $$UCHARDET_PATH/LangModels/LangHebrewModel.cpp $$UCHARDET_PATH/LangModels/LangSpanishModel.cpp $$UCHARDET_PATH/LangModels/LangThaiModel.cpp $$UCHARDET_PATH/LangModels/LangTurkishModel.cpp $$UCHARDET_PATH/LangModels/LangVietnameseModel.cpp $$UCHARDET_PATH/nsHebrewProber.cpp $$UCHARDET_PATH/nsCharSetProber.cpp $$UCHARDET_PATH/nsBig5Prober.cpp $$UCHARDET_PATH/nsEUCJPProber.cpp $$UCHARDET_PATH/nsEUCKRProber.cpp $$UCHARDET_PATH/nsEUCTWProber.cpp $$UCHARDET_PATH/nsEscCharsetProber.cpp $$UCHARDET_PATH/nsEscSM.cpp $$UCHARDET_PATH/nsGB2312Prober.cpp $$UCHARDET_PATH/nsMBCSGroupProber.cpp $$UCHARDET_PATH/nsMBCSSM.cpp $$UCHARDET_PATH/nsSBCSGroupProber.cpp $$UCHARDET_PATH/nsSBCharSetProber.cpp $$UCHARDET_PATH/nsSJISProber.cpp $$UCHARDET_PATH/nsUTF8Prober.cpp $$UCHARDET_PATH/nsLatin1Prober.cpp $$UCHARDET_PATH/nsUniversalDetector.cpp $$UCHARDET_PATH/uchardet.cpp
+
+HEADERS_TO_BUILD = CharDistribution.h $$UCHARDET_PATH/JpCntx.h $$UCHARDET_PATH/nsBig5Prober.h $$UCHARDET_PATH/nsCharSetProber.h $$UCHARDET_PATH/nsCodingStateMachine.h $$UCHARDET_PATH/nscore.h $$UCHARDET_PATH/nsEscCharsetProber.h $$UCHARDET_PATH/nsEUCJPProber.h $$UCHARDET_PATH/nsEUCKRProber.h $$UCHARDET_PATH/nsEUCTWProber.h $$UCHARDET_PATH/nsGB2312Prober.h $$UCHARDET_PATH/nsHebrewProber.h $$UCHARDET_PATH/nsLatin1Prober.h $$UCHARDET_PATH/nsMBCSGroupProber.h $$UCHARDET_PATH/nsPkgInt.h $$UCHARDET_PATH/nsSBCharSetProber.h $$UCHARDET_PATH/nsSBCSGroupProber.h $$UCHARDET_PATH/nsSJISProber.h $$UCHARDET_PATH/nsUniversalDetector.h $$UCHARDET_PATH/nsUTF8Prober.h $$UCHARDET_PATH/prmem.h $$UCHARDET_PATH/uchardet.h
+             
+SOURCES += \
+           src/main.cpp \
            src/mainform.cpp \
            src/multidownloader.cpp \
            src/aboutform.cpp \
            src/settingsform.cpp \
-           src/settings.cpp
-HEADERS += src/mainform.h \
+           src/settings.cpp \
+           $$CXX_FILES_TO_BUILD
+HEADERS +=  \
+           src/mainform.h \
            src/multidownloader.h \
            src/aboutform.h \
            src/settingsform.h \
-           src/settings.h
+           src/settings.h \
+           $$HEADERS_TO_BUILD
 
-CXX_FILES_TO_BUILD = CharDistribution.cpp JpCntx.cpp LangModels/LangArabicModel.cpp LangModels/LangBulgarianModel.cpp LangModels/LangRussianModel.cpp LangModels/LangEsperantoModel.cpp LangModels/LangFrenchModel.cpp LangModels/LangDanishModel.cpp LangModels/LangGermanModel.cpp LangModels/LangGreekModel.cpp LangModels/LangHungarianModel.cpp LangModels/LangHebrewModel.cpp LangModels/LangSpanishModel.cpp LangModels/LangThaiModel.cpp LangModels/LangTurkishModel.cpp LangModels/LangVietnameseModel.cpp nsHebrewProber.cpp nsCharSetProber.cpp nsBig5Prober.cpp nsEUCJPProber.cpp nsEUCKRProber.cpp nsEUCTWProber.cpp nsEscCharsetProber.cpp nsEscSM.cpp nsGB2312Prober.cpp nsMBCSGroupProber.cpp nsMBCSSM.cpp nsSBCSGroupProber.cpp nsSBCharSetProber.cpp nsSJISProber.cpp nsUTF8Prober.cpp nsLatin1Prober.cpp nsUniversalDetector.cpp uchardet.cpp
 
-UCHARDET_BUILD_PATH = $$PWD/build/uchardet
-UCHARDET_PATH = $$PWD/uchardet-0.0.6/src
-
-defineTest(build_cxx) {
-    system(mkdir -p $$PWD/build/uchardet/LangModels 2>/dev/null || /bin/true)
-    for (FILENAME, CXX_FILES_TO_BUILD) {
-        message(Build $${FILENAME})
-        system($$QMAKE_CXX -DVERSION=\"0.0.6\" -pipe -O2 -march=x86-64 -mtune=generic -O2 -pipe -fstack-protector-strong -fno-plt -Wall -W -D_REENTRANT -fPIC -I$$UCHARDET_PATH -I$$UCHARDET_PATH/LangModels -I$$UCHARDET_PATH/tools  -I/usr/lib/qt/mkspecs/linux-g++ -c $$UCHARDET_PATH/$${FILENAME} -o $$UCHARDET_BUILD_PATH/$${FILENAME}.o)
-        QMAKE_POST_OBJ += $$UCHARDET_BUILD_PATH/$${FILENAME}.o
-        message($$UCHARDET_BUILD_PATH/$${FILENAME}.o)
-    }
-    system(ar qc $$UCHARDET_BUILD_PATH/libuchardet.a $$QMAKE_POST_OBJ)
-    message(ar libuchardet.a)
-    system(ranlib $$UCHARDET_BUILD_PATH/libuchardet.a)
-    message(ranlib libuchardet.a)
-}
-        
-build_cxx()
-
-LIBS += $$UCHARDET_BUILD_PATH/libuchardet.a
 INCLUDEPATH += $$UCHARDET_PATH
 
 MOC_DIR = build/moc
