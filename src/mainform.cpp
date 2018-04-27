@@ -47,7 +47,6 @@ MainForm::MainForm(QWidget *parent)
                 QString("qrc:/examples/%1").arg(voicer.voicer[i]))
         );
     }
-    qDebug() << plst->mediaCount();
 
     QObject::connect(ui->actionAbout, &QAction::triggered, this, &MainForm::show_about);
     QObject::connect(ui->actionSettings, &QAction::triggered, this, &MainForm::show_settings);
@@ -229,6 +228,7 @@ void MainForm::play_toggle()
     icon1.addFile(QStringLiteral("."), QSize(), QIcon::Normal, QIcon::Off);
 
     qDebug() << m_player->state();
+    
     switch (m_player->state()) {
         case  QMediaPlayer::PausedState:
         case  QMediaPlayer::StoppedState: {
@@ -254,5 +254,8 @@ void MainForm::play_toggle()
             break;
         }
     }
+    
     ui->pushButtonPlay->setIcon(icon1);
+
+    qDebug() << m_player->state();
 }

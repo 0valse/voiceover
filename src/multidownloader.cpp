@@ -158,19 +158,25 @@ void MultiDownloader::_text2urls() {
     QString text = "";
     QString _tmp_txt;
     int count = 0;
-    int rand_num;
+    int rand_num = 0;
+
     for (int i = 0; i < slines.size(); ++i) {
       _tmp_txt = slines[i].trimmed();
-
-      rand_num = QRandomGenerator::global()->bounded(0, KEYS.size());
       
-      if (QUrl::toPercentEncoding(text).size() + QUrl::toPercentEncoding(_tmp_txt).size() + 1 < MAX_TEXT_URL) {
+      if (QUrl::toPercentEncoding(text).size() + 
+          QUrl::toPercentEncoding(_tmp_txt).size() + 1 
+          < MAX_TEXT_URL) {
            text.append(_tmp_txt).append(". ");
       } else {
          in_list[count] = QUrl(
              URL_TEMPLATE.arg(KEYS[rand_num], text.trimmed(),
                               OUT_FORMAT, speaker, QString::number(speed))
          );
+        if (rand_num == KEYS.size()) {
+             rand_num = 0;
+        } else {
+            ++rand_num;
+        }
          ++count;
          
          qDebug() << "Text: " << text;
@@ -181,11 +187,15 @@ void MultiDownloader::_text2urls() {
     }
     // add last
     if (!text.isEmpty()) {
-        rand_num = QRandomGenerator::global()->bounded(0, KEYS.size());
         in_list[count] = QUrl(
              URL_TEMPLATE.arg(KEYS[rand_num], text.trimmed(),
                               OUT_FORMAT, speaker, QString::number(speed))
         );
+        if (rand_num == KEYS.size()) {
+             rand_num = 0;
+        } else {
+            ++rand_num;
+        }
         qDebug() << "Last Text: " << text;
     }
 
