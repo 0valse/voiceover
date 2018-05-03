@@ -158,7 +158,8 @@ void MultiDownloader::_text2urls() {
     QString text = "";
     QString _tmp_txt;
     int count = 0;
-    int rand_num = 0;
+    int key_num = 0;
+    const int max_key_num = KEYS.size();
 
     for (int i = 0; i < slines.size(); ++i) {
       _tmp_txt = slines[i].trimmed();
@@ -168,18 +169,18 @@ void MultiDownloader::_text2urls() {
           < MAX_TEXT_URL) {
            text.append(_tmp_txt).append(". ");
       } else {
-         in_list[count] = QUrl(
-             URL_TEMPLATE.arg(KEYS[rand_num], text.trimmed(),
-                              OUT_FORMAT, speaker, QString::number(speed))
-         );
-        if (rand_num == KEYS.size()) {
-             rand_num = 0;
-        } else {
-            ++rand_num;
-        }
-         ++count;
-         
-         qDebug() << "Text: " << text;
+
+          qDebug() << key_num;
+
+          if (key_num == max_key_num)
+               key_num = 0;
+
+          in_list[count] = QUrl(
+              URL_TEMPLATE.arg(KEYS.value(key_num), text.trimmed(),
+                               OUT_FORMAT, speaker, QString::number(speed))
+          );
+          ++key_num;
+          ++count;
 
          text.clear();
          text.append(_tmp_txt).append(". ");
@@ -187,15 +188,16 @@ void MultiDownloader::_text2urls() {
     }
     // add last
     if (!text.isEmpty()) {
+
+        if (key_num == KEYS.size())
+             key_num = 0;
+
         in_list[count] = QUrl(
-             URL_TEMPLATE.arg(KEYS[rand_num], text.trimmed(),
+             URL_TEMPLATE.arg(KEYS.value(key_num), text.trimmed(),
                               OUT_FORMAT, speaker, QString::number(speed))
         );
-        if (rand_num == KEYS.size()) {
-             rand_num = 0;
-        } else {
-            ++rand_num;
-        }
+        ++key_num;
+
         qDebug() << "Last Text: " << text;
     }
 
@@ -218,7 +220,7 @@ void MultiDownloader::on_one_read(QNetworkReply* reply)
         ret_code = 0;
     }
     
-    qDebug() << "Retcode: " << ret_code;
+
     
     if(m_cancelledMarker.testAndSetAcquire(true, true)) {
         if (out_file->isOpen())
@@ -231,28 +233,29 @@ void MultiDownloader::on_one_read(QNetworkReply* reply)
 
     QNetworkRequest r = reply->request();
     QVariant prop = reply->property(getCounter);
-    int i;
+    int fragment;
     if (prop.canConvert<int>()) {
-        i = prop.toInt();
+        fragment = prop.toInt();
     }
     else {
-        i = 0;
+        fragment = 0;
     }
+
+    qDebug() << "fragment: " << fragment << "with retcode: " << ret_code;
 
     if(reply->error()) {
         // key problems: ret code 423
         if (ret_code == 423) key_err = true;
 
-        qDebug() << "ERROR";
-        qDebug() << reply->errorString();
+        qDebug() << "ERROR: " << reply->errorString();
 
         err_texts.append(r.url());
 
         // запишем пустой массив
-        out_list[i] = QByteArray();
+        out_list[fragment] = QByteArray();
 
     } else { // if(reply->error())
-        out_list[i] = reply->readAll();
+        out_list[fragment] = reply->readAll();
     }
 
     if (in_size == out_size) {

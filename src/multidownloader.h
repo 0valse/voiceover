@@ -19,7 +19,7 @@
 const int MAX_FILE_SIZE = 2 * 1024 * 1024;
 const int MAX_TEXT_URL = 2000;
 
-const QStringList KEYS = QStringList() 
+const QStringList KEYS = QStringList()
                         << "1e1c8209-76c4-4adb-a301-0096fd8c3328"
                         << "adf6c4d1-3235-4abf-ad90-1b3d0d658875"
                         << "d06121cf-acc6-4e2d-8ecc-e20f89ece962";
