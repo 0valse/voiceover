@@ -77,8 +77,8 @@
            <string>Тест</string>
           </property>
           <property name="icon">
-           <iconset theme="media-playback-start">
-            <normaloff>.</normaloff>.</iconset>
+           <iconset resource="../data/icons/icons.qrc">
+            <normaloff>:/16/media-playback-test_start.svg</normaloff>:/16/media-playback-test_start.svg</iconset>
           </property>
          </widget>
         </item>
@@ -192,8 +192,8 @@
          <string>Озвучить</string>
         </property>
         <property name="icon">
-         <iconset theme="audio-ready">
-          <normaloff>.</normaloff>.</iconset>
+         <iconset resource="../data/icons/icons.qrc">
+          <normaloff>:/16/audio-ready.svg</normaloff>:/16/audio-ready.svg</iconset>
         </property>
        </widget>
       </item>
@@ -209,8 +209,8 @@
          <string>Стоп</string>
         </property>
         <property name="icon">
-         <iconset theme="process-stop">
-          <normaloff>.</normaloff>.</iconset>
+         <iconset resource="../data/icons/icons.qrc">
+          <normaloff>:/16/process-stop.svg</normaloff>:/16/process-stop.svg</iconset>
         </property>
        </widget>
       </item>
@@ -245,8 +245,8 @@
   </widget>
   <action name="actionSettings">
    <property name="icon">
-    <iconset theme="settings-configure">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset resource="../data/icons/icons.qrc">
+     <normaloff>:/16/settings-configure.svg</normaloff>:/16/settings-configure.svg</iconset>
    </property>
    <property name="text">
     <string>Настройки</string>
@@ -257,8 +257,8 @@
   </action>
   <action name="actionQuit">
    <property name="icon">
-    <iconset theme="application-exit">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset resource="../data/icons/icons.qrc">
+     <normaloff>:/16/application-exit.svg</normaloff>:/16/application-exit.svg</iconset>
    </property>
    <property name="text">
     <string>Выход</string>
@@ -269,8 +269,8 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset theme="help-about">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset resource="../data/icons/icons.qrc">
+     <normaloff>:/16/help-about.svg</normaloff>:/16/help-about.svg</iconset>
    </property>
    <property name="text">
     <string>О программе</string>

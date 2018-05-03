@@ -143,7 +143,7 @@ void MainForm::onReadingFinished(int err_code, int err_files, QString outfile_na
         case MultiDownloader::ok: {
             msg.append(
                 QString::fromUtf8("Все готово!<br />") +
-                QString::fromUtf8("Выходной файл тут: <a href=\"%1\">%1</a>").arg(outfile_name)
+                QString::fromUtf8("Озвученный файл тут: <a href=\"%1\">%1</a>").arg(outfile_name)
             );
             msgBox.setIcon(QMessageBox::Information);
             break;
@@ -236,21 +236,13 @@ void MainForm::play_toggle()
             plst->setCurrentIndex(cur);
             m_player->play();
             ui->pushButtonPlay->setText(QString::fromUtf8("Стоп"));
-            
-            QString iconThemeName = QStringLiteral("media-playback-stop");
-            if (QIcon::hasThemeIcon(iconThemeName))
-                icon1 = QIcon::fromTheme(iconThemeName);
-
+            icon1 = QIcon(QPixmap(":/16/media-playback-test_stop.svg"));
             break;
         }
         case QMediaPlayer::PlayingState: {
             m_player->stop();
             ui->pushButtonPlay->setText(QString::fromUtf8("Тест"));
-            
-            QString iconThemeName = QStringLiteral("media-playback-start");
-            if (QIcon::hasThemeIcon(iconThemeName))
-                icon1 = QIcon::fromTheme(iconThemeName);
-            
+            icon1 = QIcon(QPixmap(":/16/media-playback-test_start.svg"));
             break;
         }
     }

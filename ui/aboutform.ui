@@ -213,8 +213,8 @@
         <string>Закрыть</string>
        </property>
        <property name="icon">
-        <iconset theme="dialog-close">
-         <normaloff>.</normaloff>.</iconset>
+        <iconset resource="../data/icons/icons.qrc">
+         <normaloff>:/16/application-exit.svg</normaloff>:/16/application-exit.svg</iconset>
        </property>
       </widget>
      </item>
