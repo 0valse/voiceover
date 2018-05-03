@@ -1,5 +1,15 @@
 <RCC>
   <qresource prefix="/">
+    <file>16/media-playback-playing.svg</file>
+    <file>16/media-playback-stopped.svg</file>
+    <file>16/media-playback-test_start.svg</file>
+    <file>16/media-playback-test_stop.svg</file>
+    <file>16/application-exit.svg</file>
+    <file>16/audio-ready.svg</file>
+    <file>16/process-stop.svg</file>
+    <file>16/dialog-close.svg</file>
+    <file>16/help-about.svg</file>
+    <file>16/settings-configure.svg</file>
     <file>megaphone.svg</file>
   </qresource>
 </RCC>
