@@ -31,6 +31,7 @@ HEADERS +=  \
            src/settings.h \
            $$HEADERS_TO_BUILD
 
+win32:LIBS += -llibeay32 -lssleay32 -LC:\Qt5.10\Tools\mingw530_32\opt\bin
 
 INCLUDEPATH += $$UCHARDET_PATH
 
