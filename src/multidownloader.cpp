@@ -169,9 +169,6 @@ void MultiDownloader::_text2urls() {
           < MAX_TEXT_URL) {
            text.append(_tmp_txt).append(". ");
       } else {
-
-          qDebug() << key_num;
-
           if (key_num == max_key_num)
                key_num = 0;
 
@@ -196,9 +193,6 @@ void MultiDownloader::_text2urls() {
              URL_TEMPLATE.arg(KEYS.value(key_num), text.trimmed(),
                               OUT_FORMAT, speaker, QString::number(speed))
         );
-        ++key_num;
-
-        qDebug() << "Last Text: " << text;
     }
 
     slines.clear();
