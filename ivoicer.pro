@@ -32,6 +32,7 @@ HEADERS +=  \
            $$HEADERS_TO_BUILD
 
 win32:LIBS += -llibeay32 -lssleay32 -LC:\Qt5.10\Tools\mingw530_32\opt\bin
+RC_ICONS = data/icons/ivoicer.ico
 
 INCLUDEPATH += $$UCHARDET_PATH
 
