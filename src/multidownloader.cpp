@@ -30,17 +30,19 @@ MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker, QObject
     out_file->setFileName(MultiDownloader::prepare_out_file_name(in_file_name));
     
     Settings settings;
-    ProxySettings proxy_settings = settings.loadProxySettings();
+    _appSettings app_settings = settings.loadAppSettings();
+
+    KEYS = app_settings.app_keys;
     
     QNetworkProxy proxy;
-    if (proxy_settings.used) {
-        proxy.setType((QNetworkProxy::ProxyType)proxy_settings.type);
-        proxy.setHostName(proxy_settings.host);
-        proxy.setPort(proxy_settings.port);
+    if (app_settings.used) {
+        proxy.setType((QNetworkProxy::ProxyType)app_settings.type);
+        proxy.setHostName(app_settings.host);
+        proxy.setPort(app_settings.port);
 
-        if (!(proxy_settings.username.isEmpty() or proxy_settings.password.isEmpty())) {
-            proxy.setUser(proxy_settings.username);
-            proxy.setPassword(proxy_settings.password);
+        if (!(app_settings.username.isEmpty() or app_settings.password.isEmpty())) {
+            proxy.setUser(app_settings.username);
+            proxy.setPassword(app_settings.password);
         }
     } else { // if (proxy_settings.used) {
         proxy.setType(QNetworkProxy::NoProxy);
@@ -77,6 +79,11 @@ QString MultiDownloader::prepare_out_file_name(QString in_file_name) {
 
 void MultiDownloader::run()
 {
+    if (KEYS.size() < 1) {
+        emit on_all_done(MultiDownloader::err_no_keys, 0, "");
+        return;
+    }
+
     if( m_cancelledMarker.testAndSetAcquire( true, true ) ) {
         emit on_all_done(MultiDownloader::err_cancel, 0, "");
         return;

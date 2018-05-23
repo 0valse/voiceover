@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>SettingsForm</class>
  <widget class="QWidget" name="SettingsForm">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -35,6 +38,90 @@
      <property name="tabBarAutoHide">
       <bool>true</bool>
      </property>
+     <widget class="QWidget" name="tabKeys">
+      <attribute name="title">
+       <string>Ключи приложения</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="0">
+          <widget class="QLineEdit" name="lineEditKey">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>0</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="pushButtonAdd">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Добавить</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QListWidget" name="listWidget"/>
+         </item>
+         <item row="1" column="1">
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <item>
+            <widget class="QPushButton" name="pushButtonDel">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Удалить</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_4">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelAboutKeys">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Для работы приложения необходимо установить ключи &lt;a href=&quot;https://tech.yandex.ru/speechkit/cloud/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#2980b9;&quot;&gt;Yandex SpeechKit Cloud&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Перейдите в кабинет разработчика и сгенерируйте ключ. Кабинет разработчика доступен любому пользователю Yandex. Для этого перейдите по ссылке: &lt;a href=&quot;https://developer.tech.yandex.ru/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#2980b9;&quot;&gt;https://developer.tech.yandex.ru/&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Каждый ключ имеет ограничение: 10 000 запросов в сутки. Поэтому для озвучки книги может потребоваться несколько ключей. Они будут использоваться последовательно.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>11</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="tabProxy">
       <attribute name="title">
        <string>Настройка доступа через прокси</string>
@@ -235,8 +322,8 @@
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>579</x>
-     <y>345</y>
+     <x>605</x>
+     <y>531</y>
     </hint>
     <hint type="destinationlabel">
      <x>212</x>
@@ -255,8 +342,8 @@
      <y>52</y>
     </hint>
     <hint type="destinationlabel">
-     <x>29</x>
-     <y>73</y>
+     <x>35</x>
+     <y>265</y>
     </hint>
    </hints>
   </connection>

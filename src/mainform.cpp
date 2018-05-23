@@ -50,6 +50,18 @@ MainForm::MainForm(QWidget *parent)
 
     QObject::connect(ui->actionAbout, &QAction::triggered, this, &MainForm::show_about);
     QObject::connect(ui->actionSettings, &QAction::triggered, this, &MainForm::show_settings);
+
+    if (settings.key_count() < 1) {
+        QMessageBox msgBox(this);
+
+        msgBox.setWindowTitle("Ошибка ключа");
+        msgBox.setTextFormat(Qt::RichText); // this does the magic trick and allows you to click the link
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("Не установлено ни одного ключа для доступа к серверу озвучки!");
+        msgBox.exec();
+
+        this->show_settings();
+    }
 }
 
 MainForm::~MainForm()
@@ -194,6 +206,11 @@ void MainForm::onReadingFinished(int err_code, int err_files, QString outfile_na
         case MultiDownloader::err_key_error: {
             msgBox.setIcon(QMessageBox::Critical);
             msg.append("Ошибка доступа к серверу озвучки!");
+            break;
+        }
+        case MultiDownloader::err_no_keys: {
+            msgBox.setIcon(QMessageBox::Critical);
+            msg.append("Не установлено ни одного ключа для озвучки!");
             break;
         }
     }

@@ -1,4 +1,6 @@
 #include <QSettings>
+#include <QRegExp>
+#include <QNetworkProxy>
 
 #ifndef SETTINGS_H
 #define SETTINGS_H
@@ -14,21 +16,24 @@
 #define SETTINGS_PROXY_PORT "proxy/port"
 #define SETTINGS_PROXY_USERNAME "proxy/username"
 #define SETTINGS_PROXY_PASSWORD "proxy/password"
+#define SETTINGS_KEYS "ivoicer/keys"
+
+#define LIST_SEPARATOR ':'
+#define KEY_RX "[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{10}"
 
 
-
-
-
-struct ProxySettings {
+struct _appSettings {
     bool used;
     int type;
     QString host;
     int port;
     QString username;
     QString password;
-    ProxySettings(bool us = false, int t = QNetworkProxy::HttpProxy,
-                  QString h = "", int p = 80, QString u = "", QString pswd = "")
-        : used(us), type(t), host(h), port(p), username(u), password(pswd)
+    QStringList app_keys;
+    _appSettings(bool us = false, int t = (int)QNetworkProxy::HttpProxy,
+                  QString h = "", int p = 80, QString u = "", QString pswd = "",
+                  QStringList keys = QStringList())
+        : used(us), type(t), host(h), port(p), username(u), password(pswd), app_keys(keys)
         {}
 };
 
@@ -38,8 +43,9 @@ class Settings
 public:
     Settings();
     ~Settings();
-    int saveProxySettings(ProxySettings proxy_settings);
-    ProxySettings loadProxySettings();
+    int saveAppSettings(_appSettings proxy_settings);
+    _appSettings loadAppSettings();
+    static bool is_key(QString tmp_key);
 };
 
 #endif // SETTINGS_H

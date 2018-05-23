@@ -19,10 +19,12 @@
 const int MAX_FILE_SIZE = 2 * 1024 * 1024;
 const int MAX_TEXT_URL = 2000;
 
+/*
 const QStringList KEYS = QStringList()
-                        << "1e1c8209-76c4-4adb-a301-0096fd8c3328"
-                        << "adf6c4d1-3235-4abf-ad90-1b3d0d658875"
-                        << "d06121cf-acc6-4e2d-8ecc-e20f89ece962";
+                        //<< "1e1c8209-76c4-4adb-a301-0096fd8c3328" // -
+                        //<< "adf6c4d1-3235-4abf-ad90-1b3d0d658875" // -
+                        //<< "d06121cf-acc6-4e2d-8ecc-e20f89ece962"; // -
+*/
 
 const QString URL_TEMPLATE = "https://tts.voicetech.yandex.net/generate?text=\"%2\"&format=%3&lang=ru-RU&speaker=%4&emotion=good&speed=%5&key=%1";
 //const QString URL_TEMPLATE ="http://200ok-debian.rd.ptsecurity.ru:8000/get?text=\"%2\"&format=%3&lang=ru-RU&speaker=%4&emotion=good&speed=%5&key=%1";
@@ -98,7 +100,8 @@ public:
         err_unsupported_encoding_input_file,
         err_cancel,
         warn_not_voiced,
-        err_key_error
+        err_key_error,
+        err_no_keys
     };
     const int max_redirects = 5;  
     MultiDownloader(QString in_file_name, QString _speaker, QObject *parent = 0);
@@ -117,6 +120,7 @@ public slots:
     void on_one_read(QNetworkReply *reply);
 
 private:
+    QStringList KEYS;
     bool key_err = false;
     QString speaker;
     float speed = 0.9;

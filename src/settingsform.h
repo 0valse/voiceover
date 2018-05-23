@@ -1,3 +1,6 @@
+#include "settings.h"
+
+
 #ifndef SETTINGSFORM_H
 #define SETTINGSFORM_H
 
@@ -35,13 +38,20 @@ class SettingsForm : public QWidget
 public:
     SettingsForm();
     ~SettingsForm();
+    int key_count();
 
 private slots:
     void onSaveSettings();
-    
+    void onKeyAdd();
+    void onDeleteItem();
+    void onItemChanged(int row);
+    void onLineEditKeytextChanged(QString text);
+
 private:
     Ui::SettingsForm* settings_ui;
     void struct_settings2widgets();
+    Settings settings;
+    _appSettings app_settings;
 };
 
 #endif // SETTINGSFORM_H
