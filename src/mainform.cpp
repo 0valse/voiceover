@@ -126,6 +126,7 @@ void MainForm::on_setFileName() {
             if (reply == QMessageBox::Yes) {
                 ui->lineEdit->setText(str);
                 ui->lineEditAudio->setText(out_str);
+                ui->pushButtonGo->setFocus();
             } else {
                 this->canceled();
             }
@@ -226,6 +227,7 @@ void MainForm::canceled()
     ui->progressBar->setValue(0);
     ui->lineEdit->setText("");
     ui->lineEditAudio->setText("");
+    ui->toolButtonInput->setFocus();
 }
 
 void MainForm::on_go_ready()

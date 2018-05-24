@@ -24,7 +24,7 @@ MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker, QObject
 {
     manager = new QNetworkAccessManager(this);
 
-    connect(manager, &QNetworkAccessManager::finished, this, &MultiDownloader::on_one_read);
+    connect(manager, &QNetworkAccessManager::finished, this, &MultiDownloader::onServerGetData);
     
     in_file->setFileName(in_file_name);
     out_file->setFileName(MultiDownloader::prepare_out_file_name(in_file_name));
@@ -32,8 +32,10 @@ MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker, QObject
     Settings settings;
     _appSettings app_settings = settings.loadAppSettings();
 
+    // загрузим из конфига массив ключей
     KEYS = app_settings.app_keys;
     
+    // включим использование прокси (из настроек) на всю сессию озвучки
     QNetworkProxy proxy;
     if (app_settings.used) {
         proxy.setType((QNetworkProxy::ProxyType)app_settings.type);
@@ -76,36 +78,49 @@ QString MultiDownloader::prepare_out_file_name(QString in_file_name) {
     return out;
 }
 
+// выполнение одиночного запроса к серверу озвучки
+void MultiDownloader::_reqOne(int text_id, int key_id)
+{
+    QUrl url = QUrl();
+    url.setUrl(URL_TEMPLATE.arg(
+                   KEYS.value(key_id), in_list.value(text_id),
+                    OUT_FORMAT, speaker, QString::number(speed)
+                   )
+               );
+
+    int rand_num = QRandomGenerator::global()->bounded(0, UA.size());
+
+    QNetworkRequest r(url);
+    r.setHeader(QNetworkRequest::UserAgentHeader, UA[rand_num]);
+
+    QNetworkReply *rpl;
+    rpl = manager->get(r);
+    rpl->setProperty(getCounter, QVariant(text_id));
+    connect(this, &MultiDownloader::need_abort, rpl, &QNetworkReply::abort);
+}
 
 void MultiDownloader::run()
 {
+    active_key_num = 0;
+
     if (KEYS.size() < 1) {
-        emit on_all_done(MultiDownloader::err_no_keys, 0, "");
+        all_done(MultiDownloader::err_no_keys, 0, "");
         return;
     }
 
     if( m_cancelledMarker.testAndSetAcquire( true, true ) ) {
-        emit on_all_done(MultiDownloader::err_cancel, 0, "");
+        all_done(MultiDownloader::err_cancel, 0, "");
         return;
     }
     
     _clean();
-    _text2urls();
+    _text2list();
     if (!out_file->open(QIODevice::WriteOnly)) {
-        emit on_all_done(MultiDownloader::err_write_file, 0, out_file->fileName());
+        all_done(MultiDownloader::err_write_file, 0, out_file->fileName());
     }
     
-    QNetworkReply *rpl;
-    int rand_num = QRandomGenerator::global()->bounded(0, UA.size());
     for (int i = 0; i < in_list.size(); ++i) {
-        QNetworkRequest r;
-        r.setUrl(in_list[i]);
-        r.setHeader(QNetworkRequest::UserAgentHeader, UA[rand_num]);
-        
-        rpl = manager->get(r);
-        
-        rpl->setProperty(getCounter, QVariant(i));
-        connect(this, &MultiDownloader::need_abort, rpl, &QNetworkReply::abort);
+        _reqOne(i, active_key_num);
     }
 }
 
@@ -116,28 +131,32 @@ void MultiDownloader::_clean()
     err_texts.clear();
 }
 
-
-void MultiDownloader::_text2urls() {
+// метод подготовки массива URL
+void MultiDownloader::_text2list() {
     if (!in_file->open(QIODevice::ReadOnly)) {
-        emit on_all_done(MultiDownloader::err_read_file, 0, "");
+        all_done(MultiDownloader::err_read_file, 0, "");
         return;
     }
     
     QByteArray buf = in_file->read(MAX_FILE_SIZE);
     in_file->close();
 
+    // Определим MIME тип входных данных
     QMimeType mtype = QMimeDatabase().mimeTypeForData(buf);
     qDebug() << "File MIME type: " << mtype.name();
     
+    // для невалидных типов эмитим ошибку
+    // пока поддерживаем только TXT
     if (mtype.name() != VALID_MIME ) {
-        emit on_all_done(MultiDownloader::err_unsupported_mime_input_file, 0, "");
+        emit all_done(MultiDownloader::err_unsupported_mime_input_file, 0, "");
         return;
     }
     
+    // определим кодировку текстового файла
     uchardet_t upage = uchardet_new();
     int retval = uchardet_handle_data(upage, buf.constData(), buf.size());
     if (retval != 0) {
-        emit on_all_done(MultiDownloader::err_unsupported_encoding_input_file, 0, "");
+        all_done(MultiDownloader::err_unsupported_encoding_input_file, 0, "");
         uchardet_data_end(upage);
         uchardet_delete(upage);
         return;
@@ -153,13 +172,16 @@ void MultiDownloader::_text2urls() {
     encode_page = nullptr;
     delete encode_page;
     
+    // конвертим входной текст в Unicode из определенной выше кодировки
     QString s = codec->toUnicode(buf.constData());
     buf.clear();
     
+    // тупая обработка лишних символов: образаем лишние проблемы, убирем символы переноса строки, перевода каретки,..
     s = s.trimmed().replace(".\n", ". ").replace("\n", ". ").simplified();
     s = s.replace("   ", " ").replace("  ", " ").replace("..", ".");
     s = s.replace(";.", ";").replace(":.", ":").replace("?.", "?").replace("!.", "!").replace("***", "\n");
     
+    // сплитим в массив по предложениям
     QStringList slines = s.split(". ");
     
     QString text = "";
@@ -168,6 +190,8 @@ void MultiDownloader::_text2urls() {
     int key_num = 0;
     const int max_key_num = KEYS.size();
 
+    // заполним массив URLами чтобы размер полезного текста был не более 2000 (urlencoded)
+    // элементы массива заполняются только предложениями.
     for (int i = 0; i < slines.size(); ++i) {
       _tmp_txt = slines[i].trimmed();
       
@@ -179,10 +203,7 @@ void MultiDownloader::_text2urls() {
           if (key_num == max_key_num)
                key_num = 0;
 
-          in_list[count] = QUrl(
-              URL_TEMPLATE.arg(KEYS.value(key_num), text.trimmed(),
-                               OUT_FORMAT, speaker, QString::number(speed))
-          );
+          in_list[count] = text.trimmed();
           ++key_num;
           ++count;
 
@@ -190,16 +211,14 @@ void MultiDownloader::_text2urls() {
          text.append(_tmp_txt).append(". ");
       }
     }
-    // add last
+
+    // что осталось
     if (!text.isEmpty()) {
 
         if (key_num == KEYS.size())
              key_num = 0;
 
-        in_list[count] = QUrl(
-             URL_TEMPLATE.arg(KEYS.value(key_num), text.trimmed(),
-                              OUT_FORMAT, speaker, QString::number(speed))
-        );
+        in_list[count] = text.trimmed();
     }
 
     slines.clear();
@@ -207,46 +226,56 @@ void MultiDownloader::_text2urls() {
 }
 
 
-void MultiDownloader::on_one_read(QNetworkReply* reply)
+// слот обработки ответа от сервера озвучки
+void MultiDownloader::onServerGetData(QNetworkReply* reply)
 {
     int in_size = in_list.size();
     int out_size = out_list.size() + 1;
-    int code;
-    int ret_code;
+    int code, ret_code, fragment;
+    bool code_ok, counter_ok;
 
-    QVariant var = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
-    if (var.canConvert<int>()) {
-        ret_code = var.toInt();
-    } else {
-        ret_code = 0;
-    }
-    
-
-    
+    // если ранее был получен сигнал аборта
     if(m_cancelledMarker.testAndSetAcquire(true, true)) {
+        // если ранее был получен сигнал аборта
+
         if (out_file->isOpen())
             out_file->close();
         reply->abort();
         return;
     } else {
+        // увеличим прогресс наполнения аудио-массива
         emit on_progress_change(out_size);
     }
 
     QNetworkRequest r = reply->request();
-    QVariant prop = reply->property(getCounter);
-    int fragment;
-    if (prop.canConvert<int>()) {
-        fragment = prop.toInt();
-    }
-    else {
-        fragment = 0;
-    }
 
-    qDebug() << "fragment: " << fragment << "with retcode: " << ret_code;
+    // получить номер аудио-фрагмента
+    fragment = reply->property(getCounter).toInt(&counter_ok);
+    if (!counter_ok) fragment = 0;
 
+    qDebug() << "fragment: " << fragment << "key num: " << active_key_num;
+
+    // обработать ответ сервера
     if(reply->error()) {
+        // получить код ошибки сервера
+        ret_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(&code_ok);
+        if (!code_ok) ret_code = 0;
+
+        qDebug() << "Error with retcode: " << ret_code;
+
         // key problems: ret code 423
-        if (ret_code == 423) key_err = true;
+        if (ret_code == 423) {
+            // попробовать другой ключ. Если все включи исчерпались, то поднять ошибку
+            if (active_key_num + 1 >= KEYS.size()) {
+                key_err = true;
+            } else {
+               qDebug() << "key: " << active_key_num << " " << KEYS.value(active_key_num, "?");
+               ++active_key_num;
+               _reqOne(fragment, active_key_num);
+               reply->deleteLater();
+               return;
+            }
+        }
 
         qDebug() << "ERROR: " << reply->errorString();
 
@@ -256,12 +285,14 @@ void MultiDownloader::on_one_read(QNetworkReply* reply)
         out_list[fragment] = QByteArray();
 
     } else { // if(reply->error())
+        // нет ошибок - записать ответ сервера в аудио-массив
         out_list[fragment] = reply->readAll();
     }
 
+    // оценить, что все загружено. Записать массив в файл и эмитить сигнал завершения
     if (in_size == out_size) {
         if (key_err) {
-            emit on_all_done(MultiDownloader::err_key_error, 0, "");
+            all_done(MultiDownloader::err_key_error, 0, "");
         } else {
             QMapIterator<int, QByteArray> i(out_list);
             while (i.hasNext()) {
@@ -275,17 +306,24 @@ void MultiDownloader::on_one_read(QNetworkReply* reply)
             } else {
                 code = MultiDownloader::warn_not_voiced;
             }
-            emit on_all_done(code, err_texts.size(), out_file->fileName());
+            all_done(code, err_texts.size(), out_file->fileName());
         }
     }
 
-    reply->deleteLater();
-    
+    reply->deleteLater();  
 }
+
 
 void MultiDownloader::cancel() {
     m_cancelledMarker.fetchAndStoreAcquire(true);
     disconnect(manager, &QNetworkAccessManager::finished, 0, 0);
     emit need_abort();
-    emit on_all_done(MultiDownloader::err_cancel, 0, "");
+    all_done(MultiDownloader::err_cancel, 0, "");
+}
+
+
+void MultiDownloader::all_done(int code, int err_text_size, QString out_file_name)
+{
+    emit on_all_done(code, err_text_size, out_file_name);
+    this->_clean();
 }

@@ -16,6 +16,7 @@
 
 // consts
 #define getCounter "getCounter"
+
 const int MAX_FILE_SIZE = 2 * 1024 * 1024;
 const int MAX_TEXT_URL = 2000;
 
@@ -68,20 +69,20 @@ struct Voicers {
         : voicer(v), voicer_name(n) {}
 };
 static const struct Voicers voicer(
-                        QStringList()
-				<< "zahar"
-				<< "ermil"
-				<< "oksana"
-				<< "alyss"
-				<< "omazh"
-				<< "jane",
-                        QStringList()
-                            << QString::fromUtf8("Захар")
-                            << QString::fromUtf8("Ермил")
-                            << QString::fromUtf8("Оксана")
-                            << QString::fromUtf8("Алиса")
-                            << QString::fromUtf8("Омаж")
-                            << QString::fromUtf8("Яна")
+    QStringList()
+        << "zahar"
+        << "ermil"
+        << "oksana"
+        << "alyss"
+        << "omazh"
+        << "jane",
+    QStringList()
+        << QString::fromUtf8("Захар")
+        << QString::fromUtf8("Ермил")
+        << QString::fromUtf8("Оксана")
+        << QString::fromUtf8("Алиса")
+        << QString::fromUtf8("Омаж")
+        << QString::fromUtf8("Яна")
 );
 
 
@@ -117,27 +118,31 @@ signals:
 public slots:
     void cancel();
     void run();
-    void on_one_read(QNetworkReply *reply);
+    void onServerGetData(QNetworkReply *reply);
 
 private:
-    QStringList KEYS;
-    bool key_err = false;
     QString speaker;
     float speed = 0.9;
+
     QFile *in_file = new QFile();
     QFile *out_file = new QFile();
     
     QNetworkAccessManager *manager;
 
-    QHash<int, QUrl> in_list;
+    QHash<int, QString> in_list;
     QMap<int, QByteArray> out_list;
     QList<QUrl> err_texts;
     
     QAtomicInt m_cancelledMarker;
 
-    void _prepare_list(QFile input);
-    void _text2urls();
+    QStringList KEYS;
+    int active_key_num = 0;
+    bool key_err = false;
+
+    void _text2list();
     void _clean();
+    void _reqOne(int text_id, int key_id);
+    void all_done(int code, int err_text_size, QString out_file_name);
 };
 
 #endif // MULTIDOWNLOADER_H
