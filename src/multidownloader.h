@@ -16,6 +16,7 @@
 
 // consts
 #define getCounter "getCounter"
+#define curKey "curKey"
 
 const int MAX_FILE_SIZE = 2 * 1024 * 1024;
 const int MAX_TEXT_URL = 2000;
@@ -142,7 +143,7 @@ private:
 
     void _text2list();
     void _clean();
-    void _reqOne(int text_id);
+    void _reqOne(int text_id, QString key);
     void all_done(int code, int err_text_size, QString out_file_name);
     void _key_inc();
     void append_to_out(int fragment, QByteArray bytes);

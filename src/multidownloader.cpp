@@ -82,7 +82,7 @@ QString MultiDownloader::prepare_out_file_name(QString in_file_name) {
 }
 
 // выполнение одиночного запроса к серверу озвучки
-void MultiDownloader::_reqOne(int text_id)
+void MultiDownloader::_reqOne(int text_id, QString key)
 {
     qDebug() << "request: " << text_id << "with key: " << active_key;
 
@@ -107,6 +107,7 @@ void MultiDownloader::_reqOne(int text_id)
     QNetworkReply *rpl;
     rpl = manager->get(r);
     rpl->setProperty(getCounter, QVariant(text_id));
+    rpl->setProperty(curKey, QVariant(key));
     connect(this, &MultiDownloader::need_abort, rpl, &QNetworkReply::abort);
 }
 
@@ -130,8 +131,6 @@ void MultiDownloader::_key_inc()
     }
 
     for (int i = next_num; i < KEYS.size(); i++) {
-        qDebug() << "key_num " << key_num << "next_num " << next_num << BAD_KEYS.contains(KEYS.value(i)) << KEYS.value(i);
-
         if (!BAD_KEYS.contains(KEYS.value(i))) {
             active_key = KEYS.value(i);
             find = true;
@@ -160,7 +159,7 @@ void MultiDownloader::run()
     }
     
     for (int i = 0; i < in_list.size(); ++i) {
-        _reqOne(i);
+        _reqOne(i, active_key);
         _key_inc();
     }
 }
@@ -263,6 +262,7 @@ void MultiDownloader::onServerGetData(QNetworkReply* reply)
 {
     int ret_code, fragment;
     bool code_ok, counter_ok;
+    QString cur_key;
 
     // если ранее был получен сигнал аборта
     if(m_cancelledMarker.testAndSetAcquire(true, true)) {
@@ -274,11 +274,17 @@ void MultiDownloader::onServerGetData(QNetworkReply* reply)
         return;
     }
 
-    QNetworkRequest r = reply->request();
-
     // получить номер аудио-фрагмента
     fragment = reply->property(getCounter).toInt(&counter_ok);
     if (!counter_ok) fragment = 0;
+
+    // получить ключ, используемый для данного запроса
+    QVariant var = reply->property(curKey);
+    if (var.isValid() && var.canConvert(QMetaType::QString)) {
+        cur_key = var.toString();
+    } else {
+        cur_key = "";
+    }
 
     qDebug() << "fragment: " << fragment;
 
@@ -294,10 +300,16 @@ void MultiDownloader::onServerGetData(QNetworkReply* reply)
         if (ret_code == 423) {
             // попробовать другой ключ. Если все включи исчерпались, то поднять ошибку
             if (!no_valid_keys_err) {
-                append_to_bad_keys(active_key);
+                qDebug() << "423" << cur_key;
+
+                append_to_bad_keys(cur_key);
+
+                qDebug() << KEYS;
+                qDebug() << BAD_KEYS;
+
                 _key_inc();
                 reply->deleteLater();
-                _reqOne(fragment);
+                _reqOne(fragment, active_key);
                 return;
             }
 
@@ -305,12 +317,14 @@ void MultiDownloader::onServerGetData(QNetworkReply* reply)
             append_to_out(fragment, QByteArray());
             err_fragments.append(fragment);
 
-            qDebug() << "ERROR: " << reply->errorString();
+            qDebug() << "ERROR: " << reply->errorString() << active_key;
             } // if (ret_code == 423)
         } else { // if(reply->error())
             // нет ошибок - записать ответ сервера в аудио-массив
-            append_to_out(fragment, reply->readAll());
+
             qDebug() << "no errors in reply";
+
+            append_to_out(fragment, reply->readAll());
     }
     reply->deleteLater();  
 }
@@ -351,7 +365,7 @@ void MultiDownloader::append_to_out(int fragment, QByteArray bytes)
             }
             all_done(code, err_fragments.size(), out_file->fileName());
         }
-    }
+    } // if (in_size == out_size)
 }
 
 
