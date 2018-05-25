@@ -39,7 +39,7 @@ class MainForm : public QMainWindow
     Q_OBJECT
 
 public:
-    MainForm(QWidget* parent = 0);
+    MainForm(QWidget* parent = 0, QString _in_file = "");
     ~MainForm();
 
 private slots:

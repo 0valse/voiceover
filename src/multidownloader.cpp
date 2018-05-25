@@ -11,6 +11,7 @@
 #include <QObject>
 #include <QHashIterator>
 #include <QRandomGenerator>
+#include <math.h>
 
 
 #include <uchardet.h>
@@ -32,8 +33,10 @@ MultiDownloader::MultiDownloader(QString in_file_name, QString _speaker, QObject
     Settings settings;
     _appSettings app_settings = settings.loadAppSettings();
 
-    // загрузим из конфига массив ключей
-    KEYS = app_settings.app_keys;
+    // загрузим из конфига хеша ключей
+    for (int i = 0; i < app_settings.app_keys.size(); ++i) {
+        KEYS.append(app_settings.app_keys.value(i));
+    }
     
     // включим использование прокси (из настроек) на всю сессию озвучки
     QNetworkProxy proxy;
@@ -79,11 +82,19 @@ QString MultiDownloader::prepare_out_file_name(QString in_file_name) {
 }
 
 // выполнение одиночного запроса к серверу озвучки
-void MultiDownloader::_reqOne(int text_id, int key_id)
+void MultiDownloader::_reqOne(int text_id)
 {
+    qDebug() << "request: " << text_id << "with key: " << active_key;
+
+    if (active_key == "") {
+        no_valid_keys_err = true;
+        append_to_out(text_id, QByteArray());
+        return;
+    }
+
     QUrl url = QUrl();
     url.setUrl(URL_TEMPLATE.arg(
-                   KEYS.value(key_id), in_list.value(text_id),
+                   active_key, in_list.value(text_id),
                     OUT_FORMAT, speaker, QString::number(speed)
                    )
                );
@@ -99,10 +110,39 @@ void MultiDownloader::_reqOne(int text_id, int key_id)
     connect(this, &MultiDownloader::need_abort, rpl, &QNetworkReply::abort);
 }
 
+
+// FIXME: доработать
+void MultiDownloader::_key_inc()
+{
+    if (BAD_KEYS.size() == KEYS.size()) {
+        active_key = "";
+        return;
+    }
+
+    int key_num = KEYS.indexOf(active_key);
+    int next_num;
+    bool find = false;
+
+    if (key_num + 1 >= KEYS.size()) {
+        next_num = 0;
+    } else {
+        next_num = key_num + 1;
+    }
+
+    for (int i = next_num; i < KEYS.size(); i++) {
+        qDebug() << "key_num " << key_num << "next_num " << next_num << BAD_KEYS.contains(KEYS.value(i)) << KEYS.value(i);
+
+        if (!BAD_KEYS.contains(KEYS.value(i))) {
+            active_key = KEYS.value(i);
+            find = true;
+            break;
+        }
+    }
+    if (!find) active_key = "";
+}
+
 void MultiDownloader::run()
 {
-    active_key_num = 0;
-
     if (KEYS.size() < 1) {
         all_done(MultiDownloader::err_no_keys, 0, "");
         return;
@@ -120,7 +160,8 @@ void MultiDownloader::run()
     }
     
     for (int i = 0; i < in_list.size(); ++i) {
-        _reqOne(i, active_key_num);
+        _reqOne(i);
+        _key_inc();
     }
 }
 
@@ -128,7 +169,8 @@ void MultiDownloader::_clean()
 {
     out_list.clear();
     in_list.clear();
-    err_texts.clear();
+    err_fragments.clear();
+    active_key = KEYS.value(0, "");
 }
 
 // метод подготовки массива URL
@@ -187,8 +229,6 @@ void MultiDownloader::_text2list() {
     QString text = "";
     QString _tmp_txt;
     int count = 0;
-    int key_num = 0;
-    const int max_key_num = KEYS.size();
 
     // заполним массив URLами чтобы размер полезного текста был не более 2000 (urlencoded)
     // элементы массива заполняются только предложениями.
@@ -200,11 +240,7 @@ void MultiDownloader::_text2list() {
           < MAX_TEXT_URL) {
            text.append(_tmp_txt).append(". ");
       } else {
-          if (key_num == max_key_num)
-               key_num = 0;
-
           in_list[count] = text.trimmed();
-          ++key_num;
           ++count;
 
          text.clear();
@@ -214,10 +250,6 @@ void MultiDownloader::_text2list() {
 
     // что осталось
     if (!text.isEmpty()) {
-
-        if (key_num == KEYS.size())
-             key_num = 0;
-
         in_list[count] = text.trimmed();
     }
 
@@ -229,9 +261,7 @@ void MultiDownloader::_text2list() {
 // слот обработки ответа от сервера озвучки
 void MultiDownloader::onServerGetData(QNetworkReply* reply)
 {
-    int in_size = in_list.size();
-    int out_size = out_list.size() + 1;
-    int code, ret_code, fragment;
+    int ret_code, fragment;
     bool code_ok, counter_ok;
 
     // если ранее был получен сигнал аборта
@@ -242,9 +272,6 @@ void MultiDownloader::onServerGetData(QNetworkReply* reply)
             out_file->close();
         reply->abort();
         return;
-    } else {
-        // увеличим прогресс наполнения аудио-массива
-        emit on_progress_change(out_size);
     }
 
     QNetworkRequest r = reply->request();
@@ -253,7 +280,7 @@ void MultiDownloader::onServerGetData(QNetworkReply* reply)
     fragment = reply->property(getCounter).toInt(&counter_ok);
     if (!counter_ok) fragment = 0;
 
-    qDebug() << "fragment: " << fragment << "key num: " << active_key_num;
+    qDebug() << "fragment: " << fragment;
 
     // обработать ответ сервера
     if(reply->error()) {
@@ -266,51 +293,65 @@ void MultiDownloader::onServerGetData(QNetworkReply* reply)
         // key problems: ret code 423
         if (ret_code == 423) {
             // попробовать другой ключ. Если все включи исчерпались, то поднять ошибку
-            if (active_key_num + 1 >= KEYS.size()) {
-                key_err = true;
-            } else {
-               qDebug() << "key: " << active_key_num << " " << KEYS.value(active_key_num, "?");
-               ++active_key_num;
-               _reqOne(fragment, active_key_num);
-               reply->deleteLater();
-               return;
+            if (!no_valid_keys_err) {
+                append_to_bad_keys(active_key);
+                _key_inc();
+                reply->deleteLater();
+                _reqOne(fragment);
+                return;
             }
-        }
 
-        qDebug() << "ERROR: " << reply->errorString();
+            // запишем пустой массив и поместим номер фрагмента в массив ошибок
+            append_to_out(fragment, QByteArray());
+            err_fragments.append(fragment);
 
-        err_texts.append(r.url());
-
-        // запишем пустой массив
-        out_list[fragment] = QByteArray();
-
-    } else { // if(reply->error())
-        // нет ошибок - записать ответ сервера в аудио-массив
-        out_list[fragment] = reply->readAll();
+            qDebug() << "ERROR: " << reply->errorString();
+            } // if (ret_code == 423)
+        } else { // if(reply->error())
+            // нет ошибок - записать ответ сервера в аудио-массив
+            append_to_out(fragment, reply->readAll());
+            qDebug() << "no errors in reply";
     }
+    reply->deleteLater();  
+}
 
-    // оценить, что все загружено. Записать массив в файл и эмитить сигнал завершения
+void MultiDownloader::append_to_bad_keys(QString key)
+{
+    if (!BAD_KEYS.contains(key))
+        BAD_KEYS.append(key);
+}
+
+void MultiDownloader::append_to_out(int fragment, QByteArray bytes)
+{
+    out_list[fragment] = bytes;
+
+    int code = MultiDownloader::ok;
+    int in_size = in_list.size();
+    int out_size = out_list.size();
+
+    // увеличим прогресс наполнения аудио-массива
+    emit on_progress_change(out_size);
+
+    // все фразменты получены? Записать массив в файл и эмитить сигнал завершения
     if (in_size == out_size) {
-        if (key_err) {
-            all_done(MultiDownloader::err_key_error, 0, "");
+        if (no_valid_keys_err) {
+            // ошибки ключа - все плохо
+            all_done(MultiDownloader::err_key_error, err_fragments.size(), "");
         } else {
+            // запишем в конечный файл
             QMapIterator<int, QByteArray> i(out_list);
             while (i.hasNext()) {
                 i.next();
                 out_file->write(i.value());
             }
             out_file->close();
-            
-            if (err_texts.isEmpty()) {
-                code = MultiDownloader::ok;
-            } else {
+
+            if (!err_fragments.isEmpty()) {
                 code = MultiDownloader::warn_not_voiced;
             }
-            all_done(code, err_texts.size(), out_file->fileName());
+            all_done(code, err_fragments.size(), out_file->fileName());
         }
     }
-
-    reply->deleteLater();  
 }
 
 

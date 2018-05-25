@@ -131,18 +131,22 @@ private:
 
     QHash<int, QString> in_list;
     QMap<int, QByteArray> out_list;
-    QList<QUrl> err_texts;
+    QList<int> err_fragments; // потом может что-то с этим будем делать
     
     QAtomicInt m_cancelledMarker;
 
     QStringList KEYS;
-    int active_key_num = 0;
-    bool key_err = false;
+    QStringList BAD_KEYS = QStringList ();
+    QString active_key = "";
+    bool no_valid_keys_err = false;
 
     void _text2list();
     void _clean();
-    void _reqOne(int text_id, int key_id);
+    void _reqOne(int text_id);
     void all_done(int code, int err_text_size, QString out_file_name);
+    void _key_inc();
+    void append_to_out(int fragment, QByteArray bytes);
+    void append_to_bad_keys(QString key);
 };
 
 #endif // MULTIDOWNLOADER_H

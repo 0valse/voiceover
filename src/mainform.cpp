@@ -22,7 +22,7 @@
 #include "settings.h"
 
 
-MainForm::MainForm(QWidget *parent)
+MainForm::MainForm(QWidget *parent, QString _in_file)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -61,6 +61,12 @@ MainForm::MainForm(QWidget *parent)
         msgBox.exec();
 
         this->show_settings();
+    }
+
+    qDebug() << _in_file;
+    if (!_in_file.isEmpty()) {
+        ui->lineEdit->setText(_in_file);
+        ui->lineEditAudio->setText(MultiDownloader::prepare_out_file_name(_in_file));
     }
 }
 
