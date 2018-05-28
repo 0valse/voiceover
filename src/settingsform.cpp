@@ -52,6 +52,11 @@ void SettingsForm::onSaveSettings()
     app_settings.port = settings_ui->spinBoxProxyPort->value();
     app_settings.username = settings_ui->lineEditUser->text();
     app_settings.password = settings_ui->lineEditPassword->text();
+
+    app_settings.app_keys = QStringList();
+    for (int i = 0; i < settings_ui->listWidget->count(); ++i) {
+        app_settings.app_keys.append(settings_ui->listWidget->item(i)->text());
+    }
     
     int ret = settings.saveAppSettings(app_settings);
     
@@ -131,9 +136,23 @@ void SettingsForm::onItemChanged(int row)
     }
 }
 
+
+bool SettingsForm::_is_key_in_list(QString text)
+{
+    bool ret = false;
+    for (int i = 0; i < settings_ui->listWidget->count(); ++i) {
+        QListWidgetItem* item = settings_ui->listWidget->item(i);
+        if (item->text() == text) {
+            ret = true;
+            break;
+        }
+    }
+    return ret;
+}
+
 void SettingsForm::onLineEditKeytextChanged(QString text)
 {
-    if (Settings::is_key(text)) {
+    if (Settings::is_key(text) && !_is_key_in_list(text)) {
         settings_ui->pushButtonAdd->setEnabled(true);
     } else {
         settings_ui->pushButtonAdd->setEnabled(false);

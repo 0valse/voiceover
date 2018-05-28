@@ -52,6 +52,7 @@ private:
     void struct_settings2widgets();
     Settings settings;
     _appSettings app_settings;
+    bool _is_key_in_list(QString text);
 };
 
 #endif // SETTINGSFORM_H

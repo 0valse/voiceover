@@ -19,7 +19,7 @@
 #define SETTINGS_KEYS "ivoicer/keys"
 
 #define LIST_SEPARATOR ':'
-#define KEY_RX "[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{10}"
+#define KEY_RX "[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}"
 
 
 struct _appSettings {
